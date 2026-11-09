@@ -10,7 +10,7 @@ planning issue and keeps the same layout: `main.tf`, `variables.tf`, `outputs.tf
 | `security` | [#23](https://github.com/aromapacifico-platform/planning/issues/23) | Platform identities, KMS keys and the permanent firewall rules from `rule_catalog` |
 | `ingest` | [#24](https://github.com/aromapacifico-platform/planning/issues/24) | IoT Core rules, queues and the telemetry table |
 | `farm` | [#24](https://github.com/aromapacifico-platform/planning/issues/24) | One pattern farm: things, certificates and policy bindings |
-| `focus_function` | [#25](https://github.com/aromapacifico-platform/planning/issues/25) | S3 → Lambda → inference function that confirms a focus |
+| `function` | [#25](https://github.com/aromapacifico-platform/planning/issues/25) | S3 → Lambda → inference function that confirms a focus |
 
 Rules for every module:
 

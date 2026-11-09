@@ -11,7 +11,7 @@ The architecture and the 100-hour plan live in
 
 ```
 bootstrap/                 State bucket and KMS key, applied once per account
-modules/                   Reusable modules (network, security, ingest, farm, focus_function)
+modules/                   Reusable modules (network, security, ingest, farm, function)
 environments/
   dev/                     AromaPacifico-Dev account,  10.50.0.0/16
   test/                    AromaPacifico-Test account, 10.60.0.0/16

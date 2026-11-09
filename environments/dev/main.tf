@@ -24,4 +24,4 @@ locals {
 #   module "network"        -> planning #22
 #   module "security"       -> planning #23
 #   module "ingest", "farm" -> planning #24
-#   module "focus_function" -> planning #25
+#   module "function"       -> planning #25
