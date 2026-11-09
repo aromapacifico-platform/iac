@@ -1,7 +1,106 @@
 # iac
 
-Terraform for the AromaPacífico coffee traceability platform on AWS.
+Terraform for the AromaPacífico coffee traceability platform on AWS. This is an academic
+case; it is not an official project of the Federación Nacional de Cafeteros.
 
-The structure, modules and pipeline are built in Epic 6 (100 hours). See the
-[planning board](https://github.com/orgs/aromapacifico-platform/projects/2) and
-[`planning`](https://github.com/aromapacifico-platform/planning) for the architecture and the 100-hour plan.
+The architecture and the 100-hour plan live in
+[`planning`](https://github.com/aromapacifico-platform/planning). Work is tracked on the
+[board](https://github.com/orgs/aromapacifico-platform/projects/2).
+
+## Layout
+
+```
+bootstrap/                 State bucket and KMS key, applied once per account
+modules/                   Reusable modules (network, security, ingest, farm, function)
+environments/
+  dev/                     AromaPacifico-Dev account,  10.50.0.0/16
+  test/                    AromaPacifico-Test account, 10.60.0.0/16
+  prod/                    AromaPacifico-Prod account, 10.70.0.0/16
+```
+
+Each environment has the same files:
+
+| File | Purpose |
+| --- | --- |
+| `versions.tf` | Terraform and provider constraints |
+| `backend.tf` | Empty `s3` backend; values come from `backend.hcl` |
+| `backend.hcl` | Bucket, key, KMS alias and lock settings for that account |
+| `providers.tf` | AWS provider with the mandatory landing zone tags |
+| `variables.tf` | Inputs with validation |
+| `terraform.tfvars` | Non-sensitive values for the environment |
+| `main.tf` | Locals and module calls |
+| `outputs.tf` | Values other stacks or reviewers need |
+
+## Requirements
+
+- Terraform `>= 1.10` (native S3 state locking)
+- AWS credentials from IAM Identity Center locally, or the OIDC role in the pipeline.
+  No access keys are stored in this repository or in any `tfvars` file.
+- [pre-commit](https://pre-commit.com), [TFLint](https://github.com/terraform-linters/tflint)
+  and [gitleaks](https://github.com/gitleaks/gitleaks)
+
+## Remote state
+
+Every workload account has its own bucket `aromapacifico-tfstate-<env>` and KMS key
+`alias/aromapacifico-tfstate`, created by `bootstrap/`:
+
+- The bucket is versioned, blocks public access, enforces TLS and encrypts with SSE-KMS by
+  default. Old state versions expire after 90 days.
+- The backend sets `encrypt = true`, `kms_key_id` and `use_lockfile = true`, so two runs on
+  the same environment cannot write the state at the same time.
+
+Keeping one state per account means a plan in dev can never lock or overwrite prod.
+
+### Bootstrap an account (once)
+
+```sh
+cd bootstrap
+terraform init
+terraform apply -var environment=dev
+```
+
+The bootstrap state is local and ignored by git. If it is lost, import the bucket and key
+again; nothing else depends on it.
+
+## Working on an environment
+
+```sh
+cd environments/dev
+terraform init -backend-config=backend.hcl
+terraform plan
+```
+
+`terraform.tfvars` is loaded automatically. Values that are sensitive or personal go in an
+ignored file (`*.auto.tfvars`, `*.local.tfvars` or `secrets.tfvars`) or come from the
+pipeline as `TF_VAR_*`; they are never committed.
+
+## Tags
+
+The provider applies the mandatory tags of the landing zone to every resource:
+
+| Tag | Default | Overridden by |
+| --- | --- | --- |
+| `FincaID` | `GLOBAL` | Farm resources |
+| `DronID` | `NO-APLICA` | Drone resources |
+| `AcopioID` | `MULTICENTRO` | Collection center resources |
+| `ViajeID` | `NO-APLICA` | Trip resources |
+| `Ambiente` | `desarrollo` / `pruebas` / `produccion` | — |
+| `Propietario` | `devops-fnc` | `owner` variable |
+| `Proyecto` | `AromaPacifico` | — |
+
+## Pre-commit
+
+```sh
+pre-commit install
+pre-commit run --all-files
+```
+
+The hooks run `terraform fmt`, TFLint with the AWS ruleset, private key detection and
+gitleaks. A commit that contains a credential is rejected before it reaches the remote.
+
+## Conventions
+
+- Code, commits and branches in English; Conventional Commits (`feat(network): ...`).
+- Branch names: `feat/<issue>-<short-name>`, one issue per pull request.
+- Every pull request shows a clean `terraform fmt`, `validate` and TFLint run; `plan` runs in
+  the pipeline ([#26](https://github.com/aromapacifico-platform/planning/issues/26)).
