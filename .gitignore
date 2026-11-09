@@ -1,0 +1,24 @@
+# Terraform working directories and state
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfplan
+tfplan*
+
+# Variable files that may hold sensitive or personal values.
+# The committed terraform.tfvars files hold non-sensitive values only.
+*.auto.tfvars
+*.auto.tfvars.json
+*.local.tfvars
+secrets.tfvars
+
+# CLI configuration
+.terraformrc
+terraform.rc
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
