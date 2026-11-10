@@ -12,6 +12,11 @@ variable "aws_region" {
   description = "Primary region of the platform."
   type        = string
   default     = "us-east-1"
+
+  validation {
+    condition     = var.aws_region == "us-east-1"
+    error_message = "The primary region must be us-east-1 per governance decision #2."
+  }
 }
 
 variable "availability_zones" {

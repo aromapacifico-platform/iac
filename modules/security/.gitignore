@@ -1,0 +1,8 @@
+# Terraform runtime files
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+!sample/terraform.tfvars
+
