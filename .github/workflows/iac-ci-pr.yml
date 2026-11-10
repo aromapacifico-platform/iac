@@ -326,24 +326,25 @@ jobs:
             }
 
             const header = `### Terraform Speculative Plan: \`${{ matrix.environment }}\``;
-            const body = `${header}
-            
-| Parameter | Value |
-| --- | --- |
-| Environment | \`${{ matrix.environment }}\` |
-| Working Directory | \`environments/${{ matrix.environment }}\` |
-| Trigger Commit | \`${context.sha.substring(0, 7)}\` |
-| Auth Method | AWS OIDC (${{ steps.aws-auth.outcome || 'static-mode' }}) |
-
-<details>
-<summary>View Terraform Plan Output</summary>
-
-\`\`\`hcl
-${planText}
-\`\`\`
-
-</details>
-`;
+            const body = [
+              header,
+              "",
+              "| Parameter | Value |",
+              "| --- | --- |",
+              `| Environment | \`${{ matrix.environment }}\` |`,
+              `| Working Directory | \`environments/${{ matrix.environment }}\` |`,
+              `| Trigger Commit | \`${context.sha.substring(0, 7)}\` |`,
+              `| Auth Method | AWS OIDC (${{ steps.aws-auth.outcome || 'static-mode' }}) |`,
+              "",
+              "<details>",
+              "<summary>View Terraform Plan Output</summary>",
+              "",
+              "```hcl",
+              planText,
+              "```",
+              "",
+              "</details>"
+            ].join("\n");
 
             try {
               const { data: comments } = await github.rest.issues.listComments({
