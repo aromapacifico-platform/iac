@@ -33,7 +33,8 @@ Each environment has the same files:
 
 ## Requirements
 
-- Terraform `>= 1.10` (native S3 state locking)
+- Terraform `>= 1.11, < 2.0` for network and environment roots (plan-time mocks);
+  the independent bootstrap root retains its `>= 1.10` baseline for native S3 locking.
 - AWS credentials from IAM Identity Center locally, or the OIDC role in the pipeline.
   No access keys are stored in this repository or in any `tfvars` file.
 - [pre-commit](https://pre-commit.com), [TFLint](https://github.com/terraform-linters/tflint)
@@ -104,3 +105,14 @@ gitleaks. A commit that contains a credential is rejected before it reaches the 
 - Branch names: `feat/<issue>-<short-name>`, one issue per pull request.
 - Every pull request shows a clean `terraform fmt`, `validate` and TFLint run; `plan` runs in
   the pipeline ([#26](https://github.com/aromapacifico-platform/planning/issues/26)).
+
+## Environment network (planning #22)
+
+The dev/test/prod roots now instantiate `modules/network`. Supply actual scoped
+`endpoint_access` grants before a real plan; no test endpoint policy is used for
+deployment. Hybrid connectivity defaults to disabled. Only production may receive
+the shared central TGW ID. `environments/network` is a separate central-account
+root with an explicit account/role and dedicated backend, never the dev profile
+by assumption. See [the network README](modules/network/README.md) for addressing,
+inputs/outputs, both VPN tunnels, Secrets Manager PSK handling, security/DNS
+contracts, mock tests and deployment prerequisites.
