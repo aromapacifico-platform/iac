@@ -57,6 +57,7 @@ This module provisions core security infrastructure for the AromaPacifico platfo
 | security_group_ids | Map of all Security Group IDs provisioned |
 | nacl_private_id | Private subnets Network ACL identifier |
 | nacl_public_id | Public query subnets Network ACL identifier |
+| rule_catalog | Complete catalog of permanent firewall rules with parent resource IDs |
 
 ## Sample Usage
 

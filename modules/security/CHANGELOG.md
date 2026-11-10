@@ -8,5 +8,6 @@ All notable changes to the security reference module will be documented in this 
 - Platform IAM roles for telemetry ingest, focus confirmation function, sack event delivery, and flow logs.
 - Security Groups and rules mapping the permanent firewall policy catalog (C01-C20, C21, C22).
 - Network ACLs with rule-by-rule mapping of the permanent subnet policy catalog (N01-N16).
+- Contract output `rule_catalog` exposing all permanent firewall rules mapped to their parent resource IDs (`parent_id`).
 - Full compliance with PC-IAC-001 through PC-IAC-026.
 

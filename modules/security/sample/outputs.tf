@@ -13,3 +13,9 @@ output "sample_security_group_ids" {
   value       = module.security.security_group_ids
 }
 
+output "sample_rule_catalog" {
+  description = "Sample output exposing the permanent firewall rule catalog with parent resource IDs."
+  value       = module.security.rule_catalog
+}
+
+
