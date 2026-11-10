@@ -39,11 +39,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Terraform CLI
-        uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform CLI via Central .github Composite Action
+        uses: aromapacifico-platform/.github/actions/setup-iac-tools@main
         with:
-          terraform_version: '1.10.5'
-          terraform_wrapper: false
+          terraform-version: '1.10.5'
+          install-tflint: 'false'
+          install-trivy: 'false'
+          install-infracost: 'false'
 
       - name: Authenticate to AWS via OIDC
         if: vars.AWS_ROLE_ARN_DEV != ''
@@ -71,11 +73,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Terraform CLI
-        uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform CLI via Central .github Composite Action
+        uses: aromapacifico-platform/.github/actions/setup-iac-tools@main
         with:
-          terraform_version: '1.10.5'
-          terraform_wrapper: false
+          terraform-version: '1.10.5'
+          install-tflint: 'false'
+          install-trivy: 'false'
+          install-infracost: 'false'
 
       - name: Authenticate to AWS via OIDC
         if: vars.AWS_ROLE_ARN_TEST != ''
@@ -136,11 +140,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Terraform CLI
-        uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform CLI via Central .github Composite Action
+        uses: aromapacifico-platform/.github/actions/setup-iac-tools@main
         with:
-          terraform_version: '1.10.5'
-          terraform_wrapper: false
+          terraform-version: '1.10.5'
+          install-tflint: 'false'
+          install-trivy: 'false'
+          install-infracost: 'false'
 
       - name: Authenticate to AWS via OIDC
         if: vars.AWS_ROLE_ARN_PROD != ''

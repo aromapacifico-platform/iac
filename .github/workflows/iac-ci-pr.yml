@@ -61,31 +61,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Terraform CLI
-        uses: hashicorp/setup-terraform@v3
+      - name: Setup IaC Tools via Central .github Composite Action
+        uses: aromapacifico-platform/.github/actions/setup-iac-tools@main
         with:
-          terraform_version: '1.10.5'
-          terraform_wrapper: false
-
-      - name: Setup TFLint
-        uses: terraform-linters/setup-tflint@v4
-        with:
-          tflint_version: 'v0.55.0'
-
-      - name: Initialize TFLint plugins
-        shell: bash
-        run: |
-          if [ -f ".tflint.hcl" ]; then
-            tflint --init --config=".tflint.hcl"
-          else
-            tflint --init
-          fi
-
-      - name: Setup Trivy vulnerability scanner
-        uses: aquasecurity/setup-trivy@v0.2.2
-        with:
-          version: 'v0.58.2'
-          cache: true
+          terraform-version: '1.10.5'
+          tflint-version: 'v0.55.0'
+          trivy-version: 'v0.58.2'
+          install-infracost: 'false'
+          tflint-config-path: '.tflint.hcl'
 
       - name: Check Terraform formatting for module
         working-directory: ${{ matrix.module }}
@@ -148,11 +131,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Terraform CLI
-        uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform CLI via Central .github Composite Action
+        uses: aromapacifico-platform/.github/actions/setup-iac-tools@main
         with:
-          terraform_version: '1.10.5'
-          terraform_wrapper: false
+          terraform-version: '1.10.5'
+          install-tflint: 'false'
+          install-trivy: 'false'
+          install-infracost: 'false'
 
       - name: Validate environment syntax
         shell: bash
@@ -264,11 +249,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Terraform CLI
-        uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform CLI via Central .github Composite Action
+        uses: aromapacifico-platform/.github/actions/setup-iac-tools@main
         with:
-          terraform_version: '1.10.5'
-          terraform_wrapper: false
+          terraform-version: '1.10.5'
+          install-tflint: 'false'
+          install-trivy: 'false'
+          install-infracost: 'false'
 
       - name: Resolve OIDC Role ARN for Environment
         id: resolve-role
