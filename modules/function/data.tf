@@ -20,3 +20,4 @@ data "archive_file" "lambda_zip" {
   source_dir  = "${path.module}/src"
   output_path = "${path.module}/dist/focus_confirmation.zip"
 }
+

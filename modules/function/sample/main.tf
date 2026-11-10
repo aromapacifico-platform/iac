@@ -25,3 +25,4 @@ module "function" {
   expedientes_table_name = var.expedientes_table_name
   additional_tags        = local.common_tags
 }
+

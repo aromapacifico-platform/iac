@@ -12,3 +12,4 @@ mock_kms_key_data_arn    = "arn:aws:kms:us-east-1:111122223333:key/87654321-4321
 additional_tags = {
   SampleTag = "FunctionModuleFixture"
 }
+

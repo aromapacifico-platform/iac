@@ -92,3 +92,4 @@ The module provisions:
 - **PC-IAC-020:** Enforces SSE-KMS at rest, TLS 1.2+ in transit, and S3 public access block.
 - **PC-IAC-022:** Workload boundary respected: does not create VPC or Security Groups.
 - **PC-IAC-026:** Decoupled `sample/` consuming pure variables transformed in `locals.tf`.
+

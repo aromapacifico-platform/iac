@@ -51,3 +51,4 @@ output "retry_attempts" {
   description = "Configured maximum retry attempts for asynchronous invocations before DLQ routing."
   value       = aws_lambda_function_event_invoke_config.this.maximum_retry_attempts
 }
+

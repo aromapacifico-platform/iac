@@ -26,3 +26,4 @@ output "sample_retry_attempts" {
   description = "Sample output exposing configured maximum retry attempts."
   value       = module.function.retry_attempts
 }
+

@@ -15,3 +15,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scoped IAM execution role granting the exact 3 required permissions (S3 read, DynamoDB write to expedientes, Rekognition inference) plus CloudWatch logs and SQS DLQ.
 - Explicit invariant preventing the Lambda role from modifying or authorizing fumigation orders.
 - Comprehensive fixture in `sample/` following the PC-IAC-026 transformation pattern.
+
