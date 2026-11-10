@@ -27,4 +27,4 @@ jobs:
     with:
       terraform-version: '1.15.8'
       tflint-version: 'v0.55.0'
-      trivy-version: 'v0.58.2'
+      trivy-version: 'v0.76.1'
