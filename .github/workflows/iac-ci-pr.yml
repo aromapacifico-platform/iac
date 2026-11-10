@@ -4,6 +4,11 @@ on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - main
+      - feat/*
+      - feature/*
   workflow_dispatch:
 
 permissions:
@@ -13,7 +18,7 @@ permissions:
   issues: write
 
 concurrency:
-  group: iac-ci-pr-${{ github.head_ref || github.run_id }}
+  group: iac-ci-pr-${{ github.head_ref || github.ref_name || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -43,7 +48,7 @@ jobs:
         run: |
           BASE_REF="origin/${{ github.base_ref || 'main' }}"
           echo "[INFO] Comparing changes against base ref: $BASE_REF"
-          python .github/scripts/detect_changed_targets.py --base-ref "$BASE_REF"
+          python .github/scripts/detect_changed_targets.py --base-ref "$BASE_REF" || python .github/scripts/detect_changed_targets.py --force-all
 
   validate-modules:
     name: 'Validate Module (${{ matrix.module }})'
@@ -58,14 +63,31 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup IaC Tools (Invokes Central .github Action)
-        uses: aromapacifico-platform/.github/.github/actions/setup-iac-tools@main
+      - name: Setup Terraform CLI
+        uses: hashicorp/setup-terraform@v3
         with:
-          terraform-version: '1.10.5'
-          tflint-version: 'v0.55.0'
-          trivy-version: 'v0.58.2'
-          install-infracost: 'false'
-          tflint-config-path: '.tflint.hcl'
+          terraform_version: '1.10.5'
+          terraform_wrapper: false
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: 'v0.55.0'
+
+      - name: Initialize TFLint plugins
+        shell: bash
+        run: |
+          if [ -f ".tflint.hcl" ]; then
+            tflint --init --config=".tflint.hcl"
+          else
+            tflint --init
+          fi
+
+      - name: Setup Trivy vulnerability scanner
+        uses: aquasecurity/setup-trivy@v0.2.2
+        with:
+          version: 'v0.58.2'
+          cache: true
 
       - name: Check Terraform formatting for module
         working-directory: ${{ matrix.module }}
@@ -128,14 +150,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup IaC Tools (Invokes Central .github Action)
-        uses: aromapacifico-platform/.github/.github/actions/setup-iac-tools@main
+      - name: Setup Terraform CLI
+        uses: hashicorp/setup-terraform@v3
         with:
-          terraform-version: '1.10.5'
-          tflint-version: 'v0.55.0'
-          trivy-version: 'v0.58.2'
-          install-infracost: 'false'
-          tflint-config-path: '.tflint.hcl'
+          terraform_version: '1.10.5'
+          terraform_wrapper: false
 
       - name: Validate environment syntax
         shell: bash
@@ -246,13 +265,13 @@ jobs:
           ENV_NAME="${{ matrix.environment }}"
           case "$ENV_NAME" in
             dev)
-              ROLE="${ROLE_DEV:-arn:aws:iam::111111111111:role/aromapacifico-ci-dev}"
+              ROLE="${ROLE_DEV:-}"
               ;;
             test)
-              ROLE="${ROLE_TEST:-arn:aws:iam::222222222222:role/aromapacifico-ci-test}"
+              ROLE="${ROLE_TEST:-}"
               ;;
             prod)
-              ROLE="${ROLE_PROD:-arn:aws:iam::333333333333:role/aromapacifico-ci-prod}"
+              ROLE="${ROLE_PROD:-}"
               ;;
             *)
               ROLE=""
@@ -262,6 +281,7 @@ jobs:
 
       - name: Authenticate to AWS via OIDC (No Static Credentials)
         id: aws-auth
+        if: steps.resolve-role.outputs.role_arn != ''
         uses: aws-actions/configure-aws-credentials@v4
         continue-on-error: true
         with:
@@ -269,33 +289,11 @@ jobs:
           aws-region: us-east-1
           audience: sts.amazonaws.com
 
-      - name: Enforce Strict OIDC Authentication Policy
-        id: verify-auth
-        shell: bash
-        env:
-          AUTH_OUTCOME: ${{ steps.aws-auth.outcome }}
-          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
-          EVENT_NAME: ${{ github.event_name }}
-          REPO_NAME: ${{ github.repository }}
-        run: |
-          echo "[INFO] Event: $EVENT_NAME | Repository: $REPO_NAME | Is Fork: $IS_FORK | OIDC Outcome: $AUTH_OUTCOME"
-          if [ "$IS_FORK" != "true" ]; then
-            if [ "$AUTH_OUTCOME" != "success" ]; then
-              echo "[WARN] AWS OIDC role '${{ steps.resolve-role.outputs.role_arn }}' not assumed. Performing static validation."
-            else
-              echo "[SUCCESS] AWS OIDC authentication validated successfully for internal branch."
-            fi
-          fi
-
       - name: Execute Terraform Speculative Plan
         id: tf-plan
         shell: bash
         run: |
           TARGET_DIR="environments/${{ matrix.environment }}"
-          if [ ! -d "$TARGET_DIR" ] && [ -d "iac/environments/${{ matrix.environment }}" ]; then
-            TARGET_DIR="iac/environments/${{ matrix.environment }}"
-          fi
-          
           if [ -d "$TARGET_DIR" ]; then
             cd "$TARGET_DIR"
             if [ "${{ steps.aws-auth.outcome }}" == "success" ]; then
@@ -305,7 +303,7 @@ jobs:
               terraform plan -no-color -lock=false -out=tfplan
               terraform show -no-color tfplan > plan_output.txt
             else
-              echo "[INFO] Initializing without backend..."
+              echo "[INFO] Initializing without backend (Static validation mode)..."
               terraform init -backend=false
               echo "Static syntax validation completed. Remote state inspection requires configured AWS OIDC credentials." > plan_output.txt
             fi
@@ -319,9 +317,6 @@ jobs:
           script: |
             const fs = require('fs');
             let path = `environments/${{ matrix.environment }}/plan_output.txt`;
-            if (!fs.existsSync(path)) {
-              path = `iac/environments/${{ matrix.environment }}/plan_output.txt`;
-            }
             if (!fs.existsSync(path)) {
               return;
             }
@@ -338,7 +333,7 @@ jobs:
 | Environment | \`${{ matrix.environment }}\` |
 | Working Directory | \`environments/${{ matrix.environment }}\` |
 | Trigger Commit | \`${context.sha.substring(0, 7)}\` |
-| Auth Method | AWS OIDC (${{ steps.aws-auth.outcome }}) |
+| Auth Method | AWS OIDC (${{ steps.aws-auth.outcome || 'static-mode' }}) |
 
 <details>
 <summary>View Terraform Plan Output</summary>
@@ -350,29 +345,32 @@ ${planText}
 </details>
 `;
 
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-
-            const botComment = comments.find(comment =>
-              comment.user.type === 'Bot' && comment.body.includes(header)
-            );
-
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: body
-              });
-            } else {
-              await github.rest.issues.createComment({
+            try {
+              const { data: comments } = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body: body
               });
-            }
 
+              const botComment = comments.find(comment =>
+                comment.user.type === 'Bot' && comment.body.includes(header)
+              );
+
+              if (botComment) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: botComment.id,
+                  body: body
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: body
+                });
+              }
+            } catch (err) {
+              core.warning(`[WARN] Could not post PR comment: ${err.message}`);
+            }
