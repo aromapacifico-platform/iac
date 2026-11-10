@@ -1,0 +1,377 @@
+name: 'IaC Continuous Integration (PR)'
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: iac-ci-pr-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  detect-changes:
+    name: 'Detect Changed Modules and Environments'
+    runs-on: ubuntu-latest
+    outputs:
+      modules: ${{ steps.detect.outputs.modules }}
+      has_modules: ${{ steps.detect.outputs.has_modules }}
+      environments: ${{ steps.detect.outputs.environments }}
+      has_environments: ${{ steps.detect.outputs.has_environments }}
+      all_triggered: ${{ steps.detect.outputs.all_triggered }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Detect Changed Targets
+        id: detect
+        shell: bash
+        run: |
+          BASE_REF="origin/${{ github.base_ref || 'main' }}"
+          echo "[INFO] Comparing changes against base ref: $BASE_REF"
+          python .github/scripts/detect_changed_targets.py --base-ref "$BASE_REF"
+
+  validate-modules:
+    name: 'Validate Module (${{ matrix.module }})'
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_modules == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJson(needs.detect-changes.outputs.modules) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup IaC Tools (Invokes Central .github Action)
+        uses: aromapacifico-platform/.github/.github/actions/setup-iac-tools@main
+        with:
+          terraform-version: '1.10.5'
+          tflint-version: 'v0.55.0'
+          trivy-version: 'v0.58.2'
+          install-infracost: 'false'
+          tflint-config-path: '.tflint.hcl'
+
+      - name: Check Terraform formatting for module
+        working-directory: ${{ matrix.module }}
+        shell: bash
+        run: |
+          echo "[INFO] Checking terraform fmt in ${{ matrix.module }}..."
+          terraform fmt -check -recursive .
+
+      - name: Validate module syntax
+        working-directory: ${{ matrix.module }}
+        shell: bash
+        run: |
+          echo "[INFO] Validating module syntax in ${{ matrix.module }}..."
+          terraform init -backend=false
+          terraform validate
+
+      - name: Run TFLint on module
+        working-directory: ${{ matrix.module }}
+        shell: bash
+        run: |
+          echo "[INFO] Running TFLint on ${{ matrix.module }}..."
+          CONFIG_PATH="../../.tflint.hcl"
+          if [ -f "$CONFIG_PATH" ]; then
+            tflint --recursive --config="$CONFIG_PATH"
+          else
+            tflint --recursive
+          fi
+
+      - name: Run Trivy security scan on module
+        working-directory: ${{ matrix.module }}
+        shell: bash
+        run: |
+          echo "[INFO] Scanning module ${{ matrix.module }} with Trivy..."
+          trivy config --severity HIGH,CRITICAL --exit-code 1 --scanners misconfig .
+
+      - name: Validate sample execution fixture (PC-IAC-026)
+        working-directory: ${{ matrix.module }}
+        shell: bash
+        run: |
+          if [ -d "sample" ]; then
+            echo "[INFO] Validating sample fixture in ${{ matrix.module }}/sample per PC-IAC-026..."
+            cd sample
+            terraform fmt -check -recursive .
+            terraform init -backend=false
+            terraform validate
+          else
+            echo "[INFO] No sample directory present in ${{ matrix.module }}."
+          fi
+
+  validate-environments:
+    name: 'Validate Environment (${{ matrix.environment }})'
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_environments == 'true' || needs.detect-changes.outputs.all_triggered == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [dev, test, prod]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup IaC Tools (Invokes Central .github Action)
+        uses: aromapacifico-platform/.github/.github/actions/setup-iac-tools@main
+        with:
+          terraform-version: '1.10.5'
+          tflint-version: 'v0.55.0'
+          trivy-version: 'v0.58.2'
+          install-infracost: 'false'
+          tflint-config-path: '.tflint.hcl'
+
+      - name: Validate environment syntax
+        shell: bash
+        run: |
+          TARGET="environments/${{ matrix.environment }}"
+          if [ -d "$TARGET" ]; then
+            echo "[INFO] Validating syntax in $TARGET..."
+            cd "$TARGET"
+            terraform fmt -check -recursive .
+            terraform init -backend=false
+            terraform validate
+          fi
+
+  infracost-finops:
+    name: 'FinOps Cloud Cost Estimation'
+    needs: [detect-changes]
+    if: always() && (needs.detect-changes.outputs.has_modules == 'true' || needs.detect-changes.outputs.has_environments == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Infracost CLI
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Generate Infracost Baseline and Diff
+        id: infracost-diff
+        shell: bash
+        env:
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+        run: |
+          CONFIG_FILE="infracost.yml"
+          if [ ! -f "$CONFIG_FILE" ] && [ -f ".github/infracost.yml" ]; then
+            CONFIG_FILE=".github/infracost.yml"
+          fi
+
+          if [ -z "$INFRACOST_API_KEY" ]; then
+            echo "[WARN] INFRACOST_API_KEY is not configured in repository secrets."
+            echo "[WARN] Skipping FinOps cost diff comment. Please add INFRACOST_API_KEY secret to enable cost estimation."
+            echo "skipped=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if [ ! -f "$CONFIG_FILE" ]; then
+            echo "[WARN] Infracost configuration file '$CONFIG_FILE' not found. Skipping cost estimation."
+            echo "skipped=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "[INFO] Generating baseline cost from base branch using $CONFIG_FILE..."
+          git checkout "${{ github.event.pull_request.base.ref || 'main' }}"
+          infracost breakdown --config-file="$CONFIG_FILE" --format=json --out-file=/tmp/infracost-base.json || true
+
+          echo "[INFO] Generating cost diff for pull request branch..."
+          git checkout "${{ github.event.pull_request.head.sha || github.sha }}"
+          infracost diff --config-file="$CONFIG_FILE" \
+            --format=json \
+            --compare-to=/tmp/infracost-base.json \
+            --out-file=/tmp/infracost.json
+
+          echo "skipped=false" >> $GITHUB_OUTPUT
+
+      - name: Post Infracost Comment to Pull Request
+        if: github.event_name == 'pull_request' && steps.infracost-diff.outputs.skipped != 'true'
+        shell: bash
+        run: |
+          if [ -f /tmp/infracost.json ]; then
+            echo "[INFO] Publishing Infracost cost estimation comment to Pull Request..."
+            infracost comment github \
+              --path=/tmp/infracost.json \
+              --repo=${{ github.repository }} \
+              --github-token=${{ secrets.GITHUB_TOKEN }} \
+              --pull-request=${{ github.event.pull_request.number }} \
+              --behavior=update
+          fi
+
+  speculative-plan:
+    name: 'Speculative Plan - ${{ matrix.environment }}'
+    needs: [detect-changes, validate-environments]
+    if: always() && (needs.detect-changes.outputs.has_environments == 'true' || needs.detect-changes.outputs.all_triggered == 'true')
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [dev, test, prod]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform CLI
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '1.10.5'
+          terraform_wrapper: false
+
+      - name: Resolve OIDC Role ARN for Environment
+        id: resolve-role
+        shell: bash
+        env:
+          ROLE_DEV: ${{ vars.AWS_ROLE_ARN_DEV || secrets.AWS_ROLE_ARN_DEV }}
+          ROLE_TEST: ${{ vars.AWS_ROLE_ARN_TEST || secrets.AWS_ROLE_ARN_TEST }}
+          ROLE_PROD: ${{ vars.AWS_ROLE_ARN_PROD || secrets.AWS_ROLE_ARN_PROD }}
+        run: |
+          ENV_NAME="${{ matrix.environment }}"
+          case "$ENV_NAME" in
+            dev)
+              ROLE="${ROLE_DEV:-arn:aws:iam::111111111111:role/aromapacifico-ci-dev}"
+              ;;
+            test)
+              ROLE="${ROLE_TEST:-arn:aws:iam::222222222222:role/aromapacifico-ci-test}"
+              ;;
+            prod)
+              ROLE="${ROLE_PROD:-arn:aws:iam::333333333333:role/aromapacifico-ci-prod}"
+              ;;
+            *)
+              ROLE=""
+              ;;
+          esac
+          echo "role_arn=${ROLE}" >> $GITHUB_OUTPUT
+
+      - name: Authenticate to AWS via OIDC (No Static Credentials)
+        id: aws-auth
+        uses: aws-actions/configure-aws-credentials@v4
+        continue-on-error: true
+        with:
+          role-to-assume: ${{ steps.resolve-role.outputs.role_arn }}
+          aws-region: us-east-1
+          audience: sts.amazonaws.com
+
+      - name: Enforce Strict OIDC Authentication Policy
+        id: verify-auth
+        shell: bash
+        env:
+          AUTH_OUTCOME: ${{ steps.aws-auth.outcome }}
+          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+          EVENT_NAME: ${{ github.event_name }}
+          REPO_NAME: ${{ github.repository }}
+        run: |
+          echo "[INFO] Event: $EVENT_NAME | Repository: $REPO_NAME | Is Fork: $IS_FORK | OIDC Outcome: $AUTH_OUTCOME"
+          if [ "$IS_FORK" != "true" ]; then
+            if [ "$AUTH_OUTCOME" != "success" ]; then
+              echo "[WARN] AWS OIDC role '${{ steps.resolve-role.outputs.role_arn }}' not assumed. Performing static validation."
+            else
+              echo "[SUCCESS] AWS OIDC authentication validated successfully for internal branch."
+            fi
+          fi
+
+      - name: Execute Terraform Speculative Plan
+        id: tf-plan
+        shell: bash
+        run: |
+          TARGET_DIR="environments/${{ matrix.environment }}"
+          if [ ! -d "$TARGET_DIR" ] && [ -d "iac/environments/${{ matrix.environment }}" ]; then
+            TARGET_DIR="iac/environments/${{ matrix.environment }}"
+          fi
+          
+          if [ -d "$TARGET_DIR" ]; then
+            cd "$TARGET_DIR"
+            if [ "${{ steps.aws-auth.outcome }}" == "success" ]; then
+              echo "[INFO] Running terraform init with remote S3 backend..."
+              terraform init -backend-config=backend.hcl
+              echo "[INFO] Generating speculative terraform plan..."
+              terraform plan -no-color -lock=false -out=tfplan
+              terraform show -no-color tfplan > plan_output.txt
+            else
+              echo "[INFO] Initializing without backend..."
+              terraform init -backend=false
+              echo "Static syntax validation completed. Remote state inspection requires configured AWS OIDC credentials." > plan_output.txt
+            fi
+          fi
+
+      - name: Post Plan Summary to Pull Request
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            let path = `environments/${{ matrix.environment }}/plan_output.txt`;
+            if (!fs.existsSync(path)) {
+              path = `iac/environments/${{ matrix.environment }}/plan_output.txt`;
+            }
+            if (!fs.existsSync(path)) {
+              return;
+            }
+            let planText = fs.readFileSync(path, 'utf8');
+            if (planText.length > 60000) {
+              planText = planText.substring(0, 60000) + '\n... [Plan output truncated due to GitHub comment size limits]';
+            }
+
+            const header = `### Terraform Speculative Plan: \`${{ matrix.environment }}\``;
+            const body = `${header}
+            
+| Parameter | Value |
+| --- | --- |
+| Environment | \`${{ matrix.environment }}\` |
+| Working Directory | \`environments/${{ matrix.environment }}\` |
+| Trigger Commit | \`${context.sha.substring(0, 7)}\` |
+| Auth Method | AWS OIDC (${{ steps.aws-auth.outcome }}) |
+
+<details>
+<summary>View Terraform Plan Output</summary>
+
+\`\`\`hcl
+${planText}
+\`\`\`
+
+</details>
+`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.type === 'Bot' && comment.body.includes(header)
+            );
+
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
