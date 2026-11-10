@@ -1,12 +1,4 @@
 # ==============================================================================
-# Sample Fixture Data Sources (PC-IAC-011)
+# Sample Fixture Data Sources (PC-IAC-011, PC-IAC-026)
 # ==============================================================================
-
-data "aws_caller_identity" "current" {
-  provider = aws.principal
-}
-
-data "aws_region" "current" {
-  provider = aws.principal
-}
-
+# No external data sources required for sample fixture.

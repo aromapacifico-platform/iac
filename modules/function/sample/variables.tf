@@ -57,6 +57,17 @@ variable "expedientes_table_name" {
   }
 }
 
+variable "inference_model_id" {
+  type        = string
+  description = "Bedrock foundation model ID for multimodal leaf diagnosis in focus confirmation."
+  default     = "amazon.nova-lite-v1:0"
+
+  validation {
+    condition     = can(regex("^[a-z0-9-]+\\.[a-z0-9.:-]+$", var.inference_model_id))
+    error_message = "inference_model_id must be a Bedrock model ID such as amazon.nova-lite-v1:0."
+  }
+}
+
 variable "mock_kms_key_objects_arn" {
   type        = string
   description = "Mock KMS key ARN for S3 objects encryption."

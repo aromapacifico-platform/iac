@@ -63,10 +63,10 @@ resource "aws_s3_bucket_public_access_block" "this" {
 resource "aws_sqs_queue" "dlq" {
   provider = aws.project
 
-  name                       = local.dlq_name
-  message_retention_seconds  = 1209600 # 14 days
-  visibility_timeout_seconds = 300
-  kms_master_key_id          = var.kms_key_data_arn
+  name                              = local.dlq_name
+  message_retention_seconds         = 1209600 # 14 days
+  visibility_timeout_seconds        = 300
+  kms_master_key_id                 = var.kms_key_data_arn
   kms_data_key_reuse_period_seconds = 300
 
   tags = merge(
@@ -161,15 +161,23 @@ resource "aws_iam_role_policy" "this" {
         ]
         Resource = "arn:${local.partition}:dynamodb:${local.aws_region}:${local.account_id}:table/${var.expedientes_table_name}"
       },
-      # 3. Permiso 3: Invocación de inferencia administrada en Amazon Rekognition
+      # 3. Permiso 3: Filtro ético perimetral anti-PII con Amazon Rekognition
       {
-        Sid    = "RekognitionInference"
+        # Rekognition does not support resource-level permissions for these calls.
+        Sid    = "RekognitionPersonFilter"
         Effect = "Allow"
         Action = [
           "rekognition:DetectFaces",
           "rekognition:DetectLabels"
         ]
         Resource = "*"
+      },
+      # 4. Permiso 4: Diagnóstico fitosanitario foliar multimodal administrado con Amazon Bedrock
+      {
+        Sid      = "BedrockLeafDiagnosis"
+        Effect   = "Allow"
+        Action   = ["bedrock:InvokeModel"]
+        Resource = "arn:${local.partition}:bedrock:${local.aws_region}::foundation-model/${var.inference_model_id}"
       },
       # 4. Auditoría y Trazabilidad en CloudWatch Logs
       {
@@ -255,6 +263,7 @@ resource "aws_lambda_function" "this" {
     variables = {
       EXPEDIENTES_TABLE_NAME     = var.expedientes_table_name
       REKOGNITION_MIN_CONFIDENCE = tostring(var.rekognition_min_confidence)
+      INFERENCE_MODEL_ID         = var.inference_model_id
       DLQ_URL                    = aws_sqs_queue.dlq.url
       ENVIRONMENT                = var.environment
       PROJECT                    = var.project

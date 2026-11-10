@@ -23,6 +23,7 @@ module "function" {
 
   # Grupo E: Variables Específicas
   expedientes_table_name = var.expedientes_table_name
+  inference_model_id     = var.inference_model_id
   additional_tags        = local.common_tags
 }
 

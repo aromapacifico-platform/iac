@@ -1,9 +1,12 @@
 # Terraform local and transient files
 .terraform/
+.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
 crash.log
 crash.*.log
+*.tfvars
+!sample/terraform.tfvars
 *.tfvars.json
 override.tf
 override.tf.json
@@ -14,6 +17,6 @@ terraform.rc
 
 # Lambda build artifacts
 *.zip
+dist/
 __pycache__/
 *.pyc
-

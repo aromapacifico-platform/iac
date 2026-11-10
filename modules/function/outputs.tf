@@ -52,3 +52,8 @@ output "retry_attempts" {
   value       = aws_lambda_function_event_invoke_config.this.maximum_retry_attempts
 }
 
+output "inference_model_id" {
+  description = "Bedrock foundation model ID configured for multimodal leaf diagnosis."
+  value       = var.inference_model_id
+}
+

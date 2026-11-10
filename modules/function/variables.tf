@@ -35,14 +35,14 @@ variable "environment" {
   }
 }
 
-variable "aws_region" {
+variable "inference_model_id" {
   type        = string
-  description = "AWS deployment region."
-  default     = "us-east-1"
+  description = "Bedrock foundation model ID that diagnoses the leaf in the focus confirmation function (planning #16, #17 and #25)."
+  default     = "amazon.nova-lite-v1:0"
 
   validation {
-    condition     = contains(["us-east-1", "us-east-2"], var.aws_region)
-    error_message = "AWS region must be us-east-1 (primary) or us-east-2 (backup)."
+    condition     = can(regex("^[a-z0-9-]+\\.[a-z0-9.:-]+$", var.inference_model_id))
+    error_message = "inference_model_id must be a Bedrock model ID such as amazon.nova-lite-v1:0."
   }
 }
 
