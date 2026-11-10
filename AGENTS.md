@@ -22,6 +22,7 @@ Cuando el usuario te entregue una **Historia de Usuario (HU)**, issue o especifi
 6. **Ventana de Cosecha (Change Freeze):** Prohibido ejecutar `terraform apply` en producción entre las **05:00 y las 18:00 (hora local de Colombia)** durante semanas de cosecha, salvo incidente crítico (`incident`).
 7. **Convención de Idioma:** Código HCL, nombres de recursos, variables, outputs y mensajes de commit en **inglés**. Documentación técnica, respuestas al usuario y sustentación en **español**.
 8. **7 Etiquetas Obligatorias (Tag Policy):** `FincaID` (default `GLOBAL`), `DronID` (default `NO-APLICA`), `AcopioID` (default `MULTICENTRO`), `ViajeID` (default `NO-APLICA`), `Ambiente` (`desarrollo`/`pruebas`/`produccion`), `Propietario` (`devops-fnc`), `Proyecto` (`AromaPacifico`).
+9. **Alcance Estricto sin Apply (Cero Apply Mandatorio):** Está **terminantemente prohibido ejecutar `terraform apply`**. El alcance de este proyecto y de la Épica 6 está acotado estrictamente a `terraform fmt`, `terraform validate` y la generación, inspección y evidencia del `terraform plan`. Ningún agente, pipeline, script o comando debe intentar aprovisionar o mutar infraestructura real en AWS.
 
 ---
 
@@ -70,3 +71,4 @@ Cuando se reciba una HU como prompt:
    - Si es integración en ambiente: actualizar `environments/<env>/main.tf` respetando el orden `PC-IAC-013`, `locals.tf` (`PC-IAC-021`, `PC-IAC-025`) y `variables.tf` (`PC-IAC-002`).
 5. **Aplicar Seguridad Well-Architected (PC-IAC-020):** Cifrado KMS, mínimo privilegio IAM, subredes privadas, DLQ en colas, TLS 1.2+.
 6. **Validar y Entregar:** Confirmar formato HCL, ausencia de secretos (`PC-IAC-016`) y proporcionar los comandos de ejecución (`terraform init`, `terraform plan`).
+
