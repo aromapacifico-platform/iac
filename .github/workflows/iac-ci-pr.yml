@@ -173,6 +173,7 @@ jobs:
     needs: [detect-changes]
     if: github.event_name == 'pull_request' && (needs.detect-changes.outputs.has_modules == 'true' || needs.detect-changes.outputs.has_environments == 'true')
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -187,6 +188,7 @@ jobs:
       - name: Generate Infracost Baseline and Diff
         id: infracost-diff
         shell: bash
+        continue-on-error: true
         env:
           INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
         run: |
@@ -210,29 +212,45 @@ jobs:
 
           echo "[INFO] Generating baseline cost from base branch using $CONFIG_FILE..."
           git checkout "${{ github.event.pull_request.base.ref || 'main' }}"
-          infracost breakdown --config-file="$CONFIG_FILE" --format=json --out-file=/tmp/infracost-base.json || true
+          if [ -f "$CONFIG_FILE" ]; then
+            infracost breakdown --config-file="$CONFIG_FILE" --format=json --out-file=/tmp/infracost-base.json || true
+          fi
 
           echo "[INFO] Generating cost diff for pull request branch..."
           git checkout "${{ github.event.pull_request.head.sha || github.sha }}"
-          infracost diff --config-file="$CONFIG_FILE" \
-            --format=json \
-            --compare-to=/tmp/infracost-base.json \
-            --out-file=/tmp/infracost.json
 
-          echo "skipped=false" >> $GITHUB_OUTPUT
+          if [ -f /tmp/infracost-base.json ] && [ -s /tmp/infracost-base.json ]; then
+            infracost diff --config-file="$CONFIG_FILE" \
+              --format=json \
+              --compare-to=/tmp/infracost-base.json \
+              --out-file=/tmp/infracost.json || true
+          else
+            echo "[INFO] Baseline not available or empty; generating initial breakdown for PR branch..."
+            infracost breakdown --config-file="$CONFIG_FILE" \
+              --format=json \
+              --out-file=/tmp/infracost.json || true
+          fi
+
+          if [ -s /tmp/infracost.json ]; then
+            echo "skipped=false" >> $GITHUB_OUTPUT
+          else
+            echo "[WARN] Could not produce Infracost JSON diff/breakdown. Skipping comment."
+            echo "skipped=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Post Infracost Comment to Pull Request
         if: github.event_name == 'pull_request' && steps.infracost-diff.outputs.skipped != 'true'
         shell: bash
+        continue-on-error: true
         run: |
-          if [ -f /tmp/infracost.json ]; then
+          if [ -f /tmp/infracost.json ] && [ -s /tmp/infracost.json ]; then
             echo "[INFO] Publishing Infracost cost estimation comment to Pull Request..."
             infracost comment github \
               --path=/tmp/infracost.json \
               --repo=${{ github.repository }} \
               --github-token=${{ secrets.GITHUB_TOKEN }} \
               --pull-request=${{ github.event.pull_request.number }} \
-              --behavior=update
+              --behavior=update || true
           fi
 
   speculative-plan:
