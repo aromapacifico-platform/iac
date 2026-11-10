@@ -295,6 +295,25 @@ jobs:
           esac
           echo "role_arn=${ROLE}" >> $GITHUB_OUTPUT
 
+      - name: Inspect OIDC Token Claims (Diagnostic)
+        shell: bash
+        run: |
+          echo "[INFO] Inspecting GitHub Actions OIDC JWT claims..."
+          if [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ] && [ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ]; then
+            TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com" | jq -r '.value // empty')
+            if [ -n "$TOKEN" ]; then
+              PAYLOAD=$(echo "$TOKEN" | cut -d'.' -f2)
+              REM=$(( ${#PAYLOAD} % 4 ))
+              if [ $REM -eq 2 ]; then PAYLOAD="${PAYLOAD}=="; elif [ $REM -eq 3 ]; then PAYLOAD="${PAYLOAD}="; fi
+              echo "[INFO] Decoded OIDC JWT Claims for AWS STS:"
+              echo "$PAYLOAD" | base64 -d 2>/dev/null | jq '{iss: .iss, aud: .aud, sub: .sub, repository: .repository, ref: .ref, event_name: .event_name}' || true
+            else
+              echo "[WARN] Could not retrieve OIDC token from GitHub token endpoint."
+            fi
+          else
+            echo "[WARN] OIDC request environment variables not present."
+          fi
+
       - name: Authenticate to AWS via OIDC (No Static Credentials)
         id: aws-auth
         if: steps.resolve-role.outputs.role_arn != ''
