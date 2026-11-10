@@ -25,6 +25,6 @@ jobs:
     uses: aromapacifico-platform/.github/.github/workflows/iac-ci-reusable.yml@main
     secrets: inherit
     with:
-      terraform-version: '1.10.5'
+      terraform-version: '1.15.8'
       tflint-version: 'v0.55.0'
       trivy-version: 'v0.58.2'

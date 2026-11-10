@@ -39,4 +39,4 @@ jobs:
     with:
       emergency_override: ${{ inputs.emergency_override || false }}
       bypass_reason: ${{ inputs.bypass_reason || '' }}
-      terraform_version: '1.10.5'
+      terraform_version: '1.15.8'
