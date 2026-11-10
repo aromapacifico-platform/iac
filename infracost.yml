@@ -1,0 +1,17 @@
+version: 0.1
+
+projects:
+  - path: environments/dev
+    name: dev
+    terraform_vars:
+      environment: dev
+
+  - path: environments/test
+    name: test
+    terraform_vars:
+      environment: test
+
+  - path: environments/prod
+    name: prod
+    terraform_vars:
+      environment: prod

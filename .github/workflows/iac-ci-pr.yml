@@ -1,0 +1,30 @@
+name: 'IaC Continuous Integration (PR)'
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: iac-ci-pr-${{ github.head_ref || github.ref_name || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  iac-ci:
+    name: 'IaC CI Pipeline'
+    uses: aromapacifico-platform/.github/.github/workflows/iac-ci-reusable.yml@main
+    secrets: inherit
+    with:
+      terraform-version: '1.15.8'
+      tflint-version: 'v0.55.0'
+      trivy-version: 'v0.76.1'

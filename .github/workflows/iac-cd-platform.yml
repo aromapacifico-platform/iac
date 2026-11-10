@@ -1,0 +1,42 @@
+name: 'IaC Continuous Delivery (Platform)'
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'bootstrap/**'
+      - 'environments/**'
+      - 'modules/**'
+      - '.github/workflows/**'
+  workflow_dispatch:
+    inputs:
+      emergency_override:
+        description: 'Authorize emergency deployment bypass during harvest freeze window.'
+        required: false
+        type: boolean
+        default: false
+      bypass_reason:
+        description: 'Incident or change ticket justification for emergency bypass.'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: iac-cd-platform-deployment
+  cancel-in-progress: false
+
+jobs:
+  iac-cd:
+    name: 'IaC CD Platform'
+    uses: aromapacifico-platform/.github/.github/workflows/iac-cd-reusable.yml@main
+    secrets: inherit
+    with:
+      emergency_override: ${{ inputs.emergency_override || false }}
+      bypass_reason: ${{ inputs.bypass_reason || '' }}
+      terraform_version: '1.15.8'
