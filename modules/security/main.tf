@@ -193,13 +193,20 @@ resource "aws_iam_role_policy" "focus_function" {
         Resource = "arn:aws:s3:::${var.client}-${var.project}-${var.environment}-focus/*"
       },
       {
-        Sid    = "RekognitionManagedInference"
+        # Rekognition does not support resource-level permissions for these calls.
+        Sid    = "RekognitionPersonFilter"
         Effect = "Allow"
         Action = [
-          "rekognition:DetectLabels",
-          "rekognition:DetectCustomLabels"
+          "rekognition:DetectFaces",
+          "rekognition:DetectLabels"
         ]
         Resource = "*"
+      },
+      {
+        Sid      = "BedrockLeafDiagnosis"
+        Effect   = "Allow"
+        Action   = ["bedrock:InvokeModel"]
+        Resource = "arn:aws:bedrock:${local.aws_region}::foundation-model/${var.inference_model_id}"
       },
       {
         Sid    = "DynamoDBWriteFocusResult"
@@ -1011,4 +1018,3 @@ resource "aws_network_acl" "public" {
     }
   )
 }
-

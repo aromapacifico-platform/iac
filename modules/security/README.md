@@ -14,13 +14,13 @@ This module provisions core security infrastructure for the AromaPacifico platfo
 | Name | Version |
 |------|---------|
 | terraform | >= 1.10.0 |
-| aws | ~> 5.0 |
+| aws | ~> 6.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| aws.project | ~> 5.0 |
+| aws.project | ~> 6.0 |
 
 ## Inputs
 
@@ -34,6 +34,7 @@ This module provisions core security infrastructure for the AromaPacifico platfo
 | public_subnet_ids | List of public subnet IDs for public query NACL association | list(string) | `[]` | no |
 | authorized_private_cidrs | List of authorized internal CIDRs | list(string) | `["10.0.0.0/8"]` | no |
 | visitor_cidr | Visitor VLAN CIDR block to deny in N01 | string | `"10.41.5.0/24"` | no |
+| inference_model_id | Bedrock foundation model for the leaf diagnosis | string | `"amazon.nova-lite-v1:0"` | no |
 | log_authorized_cidr | Logistics clients CIDR for private API access (C04) | string | `"10.41.3.0/24"` | no |
 | drone_backup_cidrs | Drone and backup CIDRs for S3 endpoint (C05) | list(string) | `["10.41.20.0/24"]` | no |
 | admin_cidr | Admin network CIDR for SSM endpoint (C16, C17) | string | `"10.41.1.0/24"` | no |
@@ -62,4 +63,3 @@ This module provisions core security infrastructure for the AromaPacifico platfo
 ## Sample Usage
 
 Refer to the `sample/` directory for consumption patterns complying with PC-IAC-026.
-

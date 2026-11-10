@@ -159,3 +159,14 @@ variable "additional_tags" {
   }
 }
 
+
+variable "inference_model_id" {
+  description = "Bedrock foundation model that diagnoses the leaf in the focus confirmation function (planning #16 and #17)."
+  type        = string
+  default     = "amazon.nova-lite-v1:0"
+
+  validation {
+    condition     = can(regex("^[a-z0-9-]+\\.[a-z0-9.:-]+$", var.inference_model_id))
+    error_message = "inference_model_id must be a Bedrock model ID such as amazon.nova-lite-v1:0."
+  }
+}

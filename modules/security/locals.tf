@@ -11,7 +11,7 @@ locals {
   )
 
   account_id = data.aws_caller_identity.current.account_id
-  aws_region = data.aws_region.current.name
+  aws_region = data.aws_region.current.region
 
   # Customer Managed Keys definitions per PC-IAC-010
   kms_keys = {
@@ -29,4 +29,3 @@ locals {
     }
   }
 }
-
