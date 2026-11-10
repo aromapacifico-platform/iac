@@ -61,6 +61,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # Governance: Central action invocation from aromapacifico-platform/.github
       - name: Setup IaC Tools via Central .github Composite Action
         uses: aromapacifico-platform/.github/actions/setup-iac-tools@main
         with:
