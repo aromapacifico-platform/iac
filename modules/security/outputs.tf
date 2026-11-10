@@ -74,3 +74,4 @@ output "nacl_public_id" {
   description = "Network ACL ID protecting public query subnets."
   value       = aws_network_acl.public.id
 }
+

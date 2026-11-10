@@ -12,3 +12,4 @@ output "sample_security_group_ids" {
   description = "Sample output exposing map of provisioned Security Group IDs."
   value       = module.security.security_group_ids
 }
+
