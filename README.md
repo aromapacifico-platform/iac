@@ -78,12 +78,10 @@ terraform plan
 ignored file (`*.auto.tfvars`, `*.local.tfvars` or `secrets.tfvars`) or come from the
 pipeline as `TF_VAR_*`; they are never committed.
 
-Real CI plans require the repository Actions variables `ENDPOINT_ACCESS_DEV`,
-`ENDPOINT_ACCESS_TEST`, `ENDPOINT_ACCESS_PROD` (JSON grants), and
-`FARM_CERTIFICATE_CSR_DEV` (raw public PEM CSR). See the
-[exact formats, input inventory and required central workflow patch](docs/iac/ci-plan-inputs.md).
-The central patch must be available before the updated caller can run. Mock test
-fixtures are not deployment inputs; missing real values keep the plan failing.
+The reusable CI workflow accepts tool versions only. Approved endpoint grants
+and the public device CSR remain prerequisites for the final plan in #27; see
+[plan inputs and pending integration](docs/iac/ci-plan-inputs.md). Mock test
+fixtures are not deployment inputs.
 
 ## Tags
 
@@ -130,4 +128,4 @@ contracts, mock tests and deployment prerequisites.
 
 ## Farm and telemetry infrastructure (#24)
 
-The [dev root](environments/dev/README.md) now wires one [farm](modules/farm/README.md) and [ingest](modules/ingest/README.md) pattern to existing network/security contracts. The device's private key stays outside Terraform, MQTT authorization is farm-specific, and the tables have no TTL pending verified five-year archival. See [validation evidence and remaining limits](docs/iac/hu-24-validation.md). Project-specific Codex instructions are in [AGENTS.md](AGENTS.md).
+The [dev root](environments/dev/README.md) now wires one [farm](modules/farm/README.md) and [ingest](modules/ingest/README.md) pattern to existing network/security contracts. The device's private key stays outside Terraform, MQTT authorization is farm-specific, and the tables have no TTL pending verified five-year archival. See [validation evidence and remaining limits](docs/iac/hu-24-validation.md).

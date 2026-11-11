@@ -145,12 +145,11 @@ wildcards in its resource names are rejected. Actual bucket/table
 ARNs and execution role ARNs must come from security/workload contracts. No
 permissive fallback or deployment DenyAll fixture is installed.
 
-CI supplies this map through `TF_VAR_endpoint_access` from repository Actions
-variables `ENDPOINT_ACCESS_DEV`, `ENDPOINT_ACCESS_TEST`, and `ENDPOINT_ACCESS_PROD`.
-Each variable is a complete JSON object for that environment, with exactly the
-`s3` and `dynamodb` grant entries. See [the exact CI input contract and central
-workflow handoff](../../docs/iac/ci-plan-inputs.md). The existing root validations
-and explicit grants remain unchanged; test fixtures are not deployment defaults.
+The current reusable CI workflow does not supply this map. PR #8 remains open;
+its per-environment `terraform.tfvars` grants and workflow pinning must be
+integrated from main after merge. See [plan prerequisites](../../docs/iac/ci-plan-inputs.md).
+The existing root validations and explicit grants remain unchanged; test fixtures
+are not deployment defaults.
 
 `collection_center_cidrs` and `network_inputs` remain as deprecated compatibility
 metadata from #21. Even the existing production map listing three sites does not

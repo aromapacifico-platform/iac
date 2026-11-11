@@ -14,8 +14,8 @@ farm_id                 = "CAU-F001"
 farm_certificate_active = false
 
 # Supply endpoint_access and farm_certificate_csr externally, with no defaults.
-# CI: ENDPOINT_ACCESS_DEV (JSON), FARM_CERTIFICATE_CSR_DEV (raw public PEM CSR).
-# Local: an explicitly selected *.local.tfvars file; see docs/iac/ci-plan-inputs.md.
+# PR #8 will provide endpoint grants in environment tfvars after merge.
+# The real public CSR remains an explicit input; see docs/iac/ci-plan-inputs.md.
 security_network = {
   authorized_private_cidrs = ["10.50.0.0/16"]
   visitor_cidr             = "10.41.5.0/24"

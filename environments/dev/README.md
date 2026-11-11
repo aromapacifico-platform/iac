@@ -10,13 +10,12 @@ Supply a real **public device-generated CSR** through `farm_certificate_csr` in 
 
 The default `farm_certificate_active=false` requests an inactive certificate. Changing it to false after activation represents node deactivation; it does not destroy the identity. Actual resource mutation is not authorized by this repository task.
 
-For CI, configure repository Actions variables `ENDPOINT_ACCESS_DEV` (the complete
-JSON grants object) and `FARM_CERTIFICATE_CSR_DEV` (the complete raw multiline
-public PEM CSR). The caller passes them to the central workflow, which sets
-`TF_VAR_endpoint_access` and `TF_VAR_farm_certificate_csr` only for the real plan.
-OpenSSL checks the CSR before planning; the synthetic mock CSR is rejected.
-See [CI input formats and the required central workflow patch](../../docs/iac/ci-plan-inputs.md).
-The CSR and approved endpoint grants remain team-supplied inputs.
+The current reusable CI workflow accepts tool versions only and does not supply
+the CSR or endpoint grants. PR #8 remains open: its environment tfvars and
+workflow pinning must be integrated from main after merge. The real public CSR
+and its approved delivery to the final #27 pipeline plan remain pending; see
+[plan inputs](../../docs/iac/ci-plan-inputs.md). Keep the private key outside
+Terraform and never substitute the synthetic mock CSR for operational input.
 
 ```bash
 terraform init -backend=false

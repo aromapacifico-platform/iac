@@ -2,6 +2,11 @@
 
 All notable changes to the security reference module will be documented in this file.
 
+## [1.1.0] - 2026-11-11
+### Removed
+- Retired rule C19 (`aws_vpc_security_group_egress_rule.c19_tcp` and `c19_udp`) and Security Group `resolver_out` per FinOps Decision 3 (Issue #31).
+- Removed `sg_egress["C19"]` from `rule_catalog` output contract and `resolver_out` from `security_group_ids`.
+
 ## [1.0.0] - 2026-11-10
 ### Added
 - Customer Managed KMS Keys for data, objects, and audit logs with annual rotation and deletion protection.
