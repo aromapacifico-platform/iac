@@ -22,7 +22,7 @@ concurrency:
 jobs:
   iac-ci:
     name: 'IaC CI Pipeline'
-    uses: aromapacifico-platform/.github/.github/workflows/iac-ci-reusable.yml@v1.0.0
+    uses: aromapacifico-platform/.github/.github/workflows/iac-ci-reusable.yml@v1.1.0
     secrets: inherit
     with:
       terraform-version: '1.15.8'

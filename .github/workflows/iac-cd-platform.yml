@@ -34,7 +34,7 @@ concurrency:
 jobs:
   iac-cd:
     name: 'IaC CD Platform'
-    uses: aromapacifico-platform/.github/.github/workflows/iac-cd-reusable.yml@v1.0.0
+    uses: aromapacifico-platform/.github/.github/workflows/iac-cd-reusable.yml@v1.1.0
     secrets: inherit
     with:
       emergency_override: ${{ inputs.emergency_override || false }}
