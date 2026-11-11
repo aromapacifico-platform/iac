@@ -116,7 +116,7 @@ variable "admin_cidr" {
 }
 
 variable "dns_cidr" {
-  description = "CIDR block for local DNS forwarders and servers (rules C18 and C19)."
+  description = "CIDR block for local DNS forwarders and servers (rule C18; rule C19 retired per FinOps decision #31)."
   type        = string
   default     = "10.41.10.0/24"
 

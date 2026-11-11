@@ -47,21 +47,20 @@ output "role_flow_logs_arn" {
 output "security_group_ids" {
   description = "Map of all provisioned Security Group IDs keyed by role."
   value = {
-    alb_query    = aws_security_group.alb_query.id
-    query        = aws_security_group.query.id
-    vpce_api     = aws_security_group.vpce_api.id
-    vpce_s3      = aws_security_group.vpce_s3.id
-    ingest       = aws_security_group.ingest.id
-    function     = aws_security_group.function.id
-    vpce_rekog   = aws_security_group.vpce_rekog.id
-    clients_log  = aws_security_group.clients_log.id
-    vpce_logs    = aws_security_group.vpce_logs.id
-    clients_kms  = aws_security_group.clients_kms.id
-    vpce_kms     = aws_security_group.vpce_kms.id
-    admin        = aws_security_group.admin.id
-    vpce_ssm     = aws_security_group.vpce_ssm.id
-    resolver_in  = aws_security_group.resolver_in.id
-    resolver_out = aws_security_group.resolver_out.id
+    alb_query   = aws_security_group.alb_query.id
+    query       = aws_security_group.query.id
+    vpce_api    = aws_security_group.vpce_api.id
+    vpce_s3     = aws_security_group.vpce_s3.id
+    ingest      = aws_security_group.ingest.id
+    function    = aws_security_group.function.id
+    vpce_rekog  = aws_security_group.vpce_rekog.id
+    clients_log = aws_security_group.clients_log.id
+    vpce_logs   = aws_security_group.vpce_logs.id
+    clients_kms = aws_security_group.clients_kms.id
+    vpce_kms    = aws_security_group.vpce_kms.id
+    admin       = aws_security_group.admin.id
+    vpce_ssm    = aws_security_group.vpce_ssm.id
+    resolver_in = aws_security_group.resolver_in.id
   }
 }
 
@@ -322,20 +321,6 @@ output "rule_catalog" {
       parent_id   = aws_security_group.resolver_in.id
       source      = var.dns_cidr
       destination = "SG-RESOLVER-IN"
-      protocol    = "tcp/udp"
-      from_port   = 53
-      to_port     = 53
-      action      = "Permitir"
-      permanence  = "P"
-      component   = "Privado"
-      owner       = "devops-fnc"
-    }
-    "sg_egress[\"C19\"]" = {
-      id          = "C19"
-      control     = "SG-OUT"
-      parent_id   = aws_security_group.resolver_out.id
-      source      = "SG-RESOLVER-OUT"
-      destination = var.dns_cidr
       protocol    = "tcp/udp"
       from_port   = 53
       to_port     = 53

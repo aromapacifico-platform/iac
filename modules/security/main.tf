@@ -625,22 +625,6 @@ resource "aws_security_group" "resolver_in" {
   )
 }
 
-# SG-RESOLVER-OUT
-resource "aws_security_group" "resolver_out" {
-  provider = aws.project
-
-  name        = "${local.name_prefix}-sg-resolver-out"
-  description = "Security Group for Route 53 Resolver Outbound Endpoint"
-  vpc_id      = var.vpc_id
-
-  tags = merge(
-    local.common_tags,
-    {
-      Name    = "${local.name_prefix}-sg-resolver-out"
-      Catalog = "C19"
-    }
-  )
-}
 
 # ==============================================================================
 # Standalone Ingress / Egress Rules (Rule Catalog C01-C20, Invariants C21, C22)
@@ -812,26 +796,6 @@ resource "aws_vpc_security_group_ingress_rule" "c18_udp" {
   cidr_ipv4         = var.dns_cidr
 }
 
-# Rule C19: SG-RESOLVER-OUT Egress to DNS-CIDR on 53 TCP/UDP
-resource "aws_vpc_security_group_egress_rule" "c19_tcp" {
-  provider          = aws.project
-  security_group_id = aws_security_group.resolver_out.id
-  description       = "C19: Route 53 Resolver Outbound TCP to local DNS forwarders"
-  ip_protocol       = "tcp"
-  from_port         = 53
-  to_port           = 53
-  cidr_ipv4         = var.dns_cidr
-}
-
-resource "aws_vpc_security_group_egress_rule" "c19_udp" {
-  provider          = aws.project
-  security_group_id = aws_security_group.resolver_out.id
-  description       = "C19: Route 53 Resolver Outbound UDP to local DNS forwarders"
-  ip_protocol       = "udp"
-  from_port         = 53
-  to_port           = 53
-  cidr_ipv4         = var.dns_cidr
-}
 
 # ==============================================================================
 # Network ACLs - Permanent Subnet Policy Catalog (Rules N01-N16)

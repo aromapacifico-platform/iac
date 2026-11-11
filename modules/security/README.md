@@ -6,7 +6,7 @@ This module provisions core security infrastructure for the AromaPacifico platfo
 
 1. Customer Managed Keys (KMS) with automated annual key rotation and lifecycle destruction prevention.
 2. Least-privilege IAM roles for platform telemetry ingestion, focus confirmation Lambda, delivery event handlers, and VPC flow logs without wildcard actions on data stores.
-3. Security Groups and standalone ingress/egress rules mapping the permanent firewall catalog entries C01 to C20.
+3. Security Groups and standalone ingress/egress rules mapping the permanent firewall catalog entries (C01-C18, C20, with C19 retired per FinOps decision #31).
 4. Network ACLs for private subnets and public query subnets mapping catalog rules N01 to N16.
 
 ## Requirements
@@ -38,7 +38,7 @@ This module provisions core security infrastructure for the AromaPacifico platfo
 | log_authorized_cidr | Logistics clients CIDR for private API access (C04) | string | `"10.41.3.0/24"` | no |
 | drone_backup_cidrs | Drone and backup CIDRs for S3 endpoint (C05) | list(string) | `["10.41.20.0/24"]` | no |
 | admin_cidr | Admin network CIDR for SSM endpoint (C16, C17) | string | `"10.41.1.0/24"` | no |
-| dns_cidr | DNS network CIDR for Route 53 Resolver endpoints (C18, C19) | string | `"10.41.10.0/24"` | no |
+| dns_cidr | DNS network CIDR for Route 53 Inbound Resolver endpoint (C18; C19 retired) | string | `"10.41.10.0/24"` | no |
 | app_cidr | Application tier CIDR for public query return traffic (N14, N15) | string | `"10.50.10.0/24"` | no |
 | kms_deletion_window_in_days | KMS key deletion window duration in days | number | `30` | no |
 | additional_tags | Map of additional tags to merge | map(string) | `{}` | no |
