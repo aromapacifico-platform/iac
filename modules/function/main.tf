@@ -330,4 +330,3 @@ resource "aws_s3_bucket_notification" "this" {
     aws_lambda_permission.allow_s3
   ]
 }
-

@@ -56,4 +56,3 @@ output "inference_model_id" {
   description = "Bedrock foundation model ID configured for multimodal leaf diagnosis."
   value       = var.inference_model_id
 }
-

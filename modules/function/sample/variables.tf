@@ -100,4 +100,3 @@ variable "additional_tags" {
     error_message = "additional_tags must be a valid map."
   }
 }
-

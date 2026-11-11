@@ -170,3 +170,13 @@ variable "inference_model_id" {
     error_message = "inference_model_id must be a Bedrock model ID such as amazon.nova-lite-v1:0."
   }
 }
+
+variable "ingest_rule_name" {
+  description = "Exact IoT rule allowed to assume the ingestion role; null preserves the conventional name."
+  type        = string
+  default     = null
+  validation {
+    condition     = var.ingest_rule_name == null ? true : can(regex("^[A-Za-z][A-Za-z0-9_]{0,127}$", var.ingest_rule_name))
+    error_message = "Use an exact IoT rule name."
+  }
+}
