@@ -1,4 +1,6 @@
 # Non-sensitive values only. Secrets never go in tfvars.
+# CI supplies endpoint_access from ENDPOINT_ACCESS_PROD (JSON), with no default.
+# See docs/iac/ci-plan-inputs.md for the exact external input contract.
 environment        = "prod"
 aws_region         = "us-east-1"
 availability_zones = ["us-east-1a", "us-east-1b"]

@@ -42,8 +42,11 @@ Each environment has the same files:
 
 ## Remote state
 
-Every workload account has its own bucket `aromapacifico-tfstate-<env>` and KMS key
-`alias/aromapacifico-tfstate`, created by `bootstrap/`:
+Every workload root targets its own bucket `aromapacifico-tfstate-<env>` and KMS key
+`alias/aromapacifico-tfstate`, defined by `bootstrap/`. Configuration alone does not
+prove they exist. The CI speculative plan retains its temporary local backend
+fallback for the reported missing S3 bucket; no bootstrap is performed by this fix.
+The configured remote-state controls are:
 
 - The bucket is versioned, blocks public access, enforces TLS and encrypts with SSE-KMS by
   default. Old state versions expire after 90 days.
@@ -74,6 +77,13 @@ terraform plan
 `terraform.tfvars` is loaded automatically. Values that are sensitive or personal go in an
 ignored file (`*.auto.tfvars`, `*.local.tfvars` or `secrets.tfvars`) or come from the
 pipeline as `TF_VAR_*`; they are never committed.
+
+Real CI plans require the repository Actions variables `ENDPOINT_ACCESS_DEV`,
+`ENDPOINT_ACCESS_TEST`, `ENDPOINT_ACCESS_PROD` (JSON grants), and
+`FARM_CERTIFICATE_CSR_DEV` (raw public PEM CSR). See the
+[exact formats, input inventory and required central workflow patch](docs/iac/ci-plan-inputs.md).
+The central patch must be available before the updated caller can run. Mock test
+fixtures are not deployment inputs; missing real values keep the plan failing.
 
 ## Tags
 

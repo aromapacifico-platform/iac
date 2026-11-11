@@ -10,6 +10,13 @@ Generate the key and CSR in the device or approved external provisioning process
 
 The module returns the public signed certificate for external device provisioning. Neither keys nor certificate fixtures are committed. The deliberately synthetic CSR in mocked tests is not usable as a deployment CSR.
 
+For the dev CI plan, supply the device's complete public PEM CSR as repository
+Actions variable `FARM_CERTIFICATE_CSR_DEV`. The central workflow checks parsing
+and the CSR self-signature with OpenSSL before passing it as
+`TF_VAR_farm_certificate_csr` to the root, which supplies this module's
+`certificate_csr`. See [the CI input contract and central workflow patch](../../docs/iac/ci-plan-inputs.md).
+CI never generates a key or substitutes the mocked CSR.
+
 Set `certificate_active=false` to request an actual in-place change to certificate status, retaining the identity and policy attachments. Set it to true to activate it. The committed dev pattern starts inactive. Real AWS changes are outside this task; no apply is performed. Certificate deactivation is not a claim that an unimplemented satellite adapter has been revoked, or a measured guarantee about already-open MQTT session timing. If such an adapter is later added, its registry must be revoked separately as required by #12. Replacing a CSR creates a replacement certificate; plan rotation with external provisioning before enabling a real node.
 
 ## Example and validation

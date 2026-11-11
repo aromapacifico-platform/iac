@@ -1,0 +1,63 @@
+--- a/.github/workflows/iac-ci-reusable.yml
++++ b/.github/workflows/iac-ci-reusable.yml
+@@ -18,6 +18,22 @@
+         required: false
+         type: string
+         default: 'v0.58.2'
++      endpoint-access-dev:
++        description: 'Public JSON endpoint_access grants for dev; explicit roles, actions and resources.'
++        required: false
++        type: string
++      endpoint-access-test:
++        description: 'Public JSON endpoint_access grants for test; explicit roles, actions and resources.'
++        required: false
++        type: string
++      endpoint-access-prod:
++        description: 'Public JSON endpoint_access grants for prod; explicit roles, actions and resources.'
++        required: false
++        type: string
++      farm-certificate-csr-dev:
++        description: 'Public device-generated PKCS#10 CSR in PEM format for dev; never a private key.'
++        required: false
++        type: string
+     secrets:
+       INFRACOST_API_KEY:
+         required: false
+@@ -348,8 +364,13 @@
+       - name: Execute Terraform Speculative Plan
+         id: tf-plan
+         shell: bash
+-        run: |
+-          TARGET_DIR="environments/${{ matrix.environment }}"
++        env:
++          CI_ENVIRONMENT: ${{ matrix.environment }}
++          TF_VAR_endpoint_access: ${{ inputs[format('endpoint-access-{0}', matrix.environment)] }}
++          TF_VAR_farm_certificate_csr: ${{ matrix.environment == 'dev' && inputs.farm-certificate-csr-dev || '' }}
++        run: |
++          set -euo pipefail
++          TARGET_DIR="environments/$CI_ENVIRONMENT"
+           if [ ! -d "$TARGET_DIR" ]; then
+             echo "::error::Environment directory $TARGET_DIR not found."
+             exit 1
+@@ -357,6 +378,21 @@
+           if [ "${{ steps.aws-auth.outcome }}" != "success" ]; then
+             echo "::error::No OIDC role configured for ${{ matrix.environment }}; a plan needs AWS credentials."
+             exit 1
++          fi
++          # Check public external inputs without logging their contents. The
++          # Terraform variable validations still enforce the exact grant contract.
++          if ! jq -e 'type == "object"' <<< "$TF_VAR_endpoint_access" > /dev/null 2>&1; then
++            echo "::error::Configure ENDPOINT_ACCESS_${CI_ENVIRONMENT^^} as a JSON object of explicit endpoint grants."
++            exit 1
++          fi
++          if [ "$CI_ENVIRONMENT" = "dev" ]; then
++            if [[ "$TF_VAR_farm_certificate_csr" != '-----BEGIN CERTIFICATE REQUEST-----'* ]] ||
++               [[ "$TF_VAR_farm_certificate_csr" == *'PRIVATE KEY'* ]] ||
++               ! openssl req -verify -noout <<< "$TF_VAR_farm_certificate_csr" 2>&1 |
++                 grep -qx 'Certificate request self-signature verify OK'; then
++              echo "::error::Configure FARM_CERTIFICATE_CSR_DEV with the complete valid public device CSR in PEM format; private keys and mock fixtures are forbidden."
++              exit 1
++            fi
+           fi
+           cd "$TARGET_DIR"
+           if terraform init -input=false -backend-config=backend.hcl; then

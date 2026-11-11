@@ -28,3 +28,9 @@ jobs:
       terraform-version: '1.15.8'
       tflint-version: 'v0.55.0'
       trivy-version: 'v0.76.1'
+      # Repository Actions variables; see docs/iac/ci-plan-inputs.md.
+      # Requires the matching central workflow patch before this caller is run.
+      endpoint-access-dev: ${{ vars.ENDPOINT_ACCESS_DEV }}
+      endpoint-access-test: ${{ vars.ENDPOINT_ACCESS_TEST }}
+      endpoint-access-prod: ${{ vars.ENDPOINT_ACCESS_PROD }}
+      farm-certificate-csr-dev: ${{ vars.FARM_CERTIFICATE_CSR_DEV }}
