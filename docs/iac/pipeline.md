@@ -286,3 +286,40 @@ En caso de requerirse un despliegue correctivo durante la ventana de congelamien
 6. **Aprobacion Humana en Produccion**:
    El lider DevOps revisa el plan final y autoriza el despliegue en el GitHub Environment `prod`.
 
+---
+
+## 8. Evidencia del CD (Pipeline de Entrega Continua y Aprobacion en Produccion)
+
+### 8.1. Contexto de Validacion y Criterios Operativos (HU #69)
+En cumplimiento de la Historia de Usuario #69, se audito e implemento la promocion continua completa de infraestructura en la plataforma AromaPacifico mediante el workflow reutilizable `.github/workflows/iac-cd-reusable.yml`.
+
+A diferencia de las validaciones preliminares sintacticas, el pipeline de CD opera con planes especulativos reales autenticados con AWS mediante OpenID Connect (OIDC), desacoplamiento estricto de artefactos inmutables y una compuerta obligatoria de aprobacion humana previa a cualquier ejecucion productiva.
+
+### 8.2. Registro de Corrida Canonica del Pipeline CD
+- **Repositorio de Invocacion**: `aromapacifico-platform/iac`
+- **Workflow**: `IaC Continuous Delivery (Platform)` (`.github/workflows/iac-cd-platform.yml`)
+- **Workflow Reutilizable**: `aromapacifico-platform/.github/.github/workflows/iac-cd-reusable.yml`
+- **Enlace Canonico de la Corrida**: [GitHub Actions Run 42945415799](https://github.com/aromapacifico-platform/iac/actions/runs/42945415799)
+- **Evento Desencadenador**: `push` a la rama `main` tras integracion de cambios de infraestructura
+- **Sello Temporal de Inicio**: `2026-11-11T02:21:02Z` (equivalente a las `21:21:02 COT`, fuera de la ventana de congelamiento de cosecha)
+
+### 8.3. Desglose de Fases y Comprobacion de Criterios de Aceptacion
+
+| Fase / Job | Estado | Duracion | Criterio Validado |
+|---|:---:|:---:|---|
+| **Deploy - Development** | `completed / success` | 17s | Autenticacion OIDC con rol federado `aromapacifico-ci-dev`, inicializacion de backend S3 con fallback a estado local temporal (`backend_override.tf`), validacion sintactica HCL y ejecucion de plan especulativo con publicacion de artefacto `plan-dev`. |
+| **Deploy - Testing** | `completed / success` | 18s | Promocion secuencial dependiente de desarrollo (`needs: deploy-dev`), autenticacion OIDC con `aromapacifico-ci-test`, plan especulativo aislado sobre `10.60.0.0/16` y emision de artefacto `plan-test`. |
+| **Evaluate Production Harvest Window** | `completed / success` | 6s | Evaluacion estricta de la regla de negocio horaria (05:00 a 18:00 UTC-5). La ejecucion nocturna (21:21 COT) permitio el paso automatico sin requerir banderas de contingencia o bypass. |
+| **Plan - Production** | `completed / success` | 18s | Generacion y bloqueo del plan inmutable de produccion sobre la cuenta destino (`10.70.0.0/16`). El artefacto binario/texto `tfplan-prod` queda subido y retenido de forma inmutable. |
+| **Apply - Production** | `waiting` (pausado) | En espera | Activacion inmediata de la proteccion de entorno GitHub Environment `prod`. El pipeline detiene su flujo a la espera de revision y aprobacion manual por parte del revisor designado (`Juanmadiaz45`). |
+
+### 8.4. Verificacion de Seguridad y Politica Cero Costos (Zero-Cost Apply)
+1. **Pausa Obligatoria de Aprobacion**:
+   - El entorno `prod` exige la autorizacion explicita del Arquitecto Cloud o Lider DevOps antes de que el runner de GitHub Actions inicie el paso de despliegue.
+   - En la corrida [Run 42945415799](https://github.com/aromapacifico-platform/iac/actions/runs/42945415799), el job `apply-prod` entro en estado de espera (`waiting`), confirmando la imposibilidad de aplicar cambios no auditados.
+2. **Salvaguarda de Costo Cero (ENABLE_TERRAFORM_APPLY=false)**:
+   - Al liberarse la aprobacion, el job ejecuta la validacion en modo demostrativo (`Zero-Cost Verification Mode`), imprimiendo el plan inmutable y asegurando que no se incurra en gastos cloud ni se mute la infraestructura real en AWS, en estricto cumplimiento con la Regla 9 de gobierno del proyecto AromaPacifico.
+3. **Depuracion de Componentes**:
+   - Se removio el archivo obsoleto `.github/workflows/iac-reusable-tf-pipeline.yml` en la organizacion `.github` para evitar duplicidad respecto a `iac-cd-reusable.yml`.
+   - Se verifico la ausencia de errores mediante `actionlint` y la suite de pruebas unitarias (`pytest`) en todos los repositorios.
+
