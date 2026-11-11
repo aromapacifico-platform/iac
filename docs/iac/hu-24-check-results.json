@@ -1,0 +1,279 @@
+{
+  "recorded_on": "2026-11-11",
+  "terraform": "1.16.6",
+  "aws_provider": "6.72.0",
+  "existing_scenarios": 44,
+  "new_mocked_scenarios": 14,
+  "full_mocked_scenarios_executed": 0,
+  "provider_targets": [
+    {
+      "target": "modules/ingest",
+      "check": "init",
+      "exit_code": 0,
+      "detail": "Backend disabled; existing AWS 6.72.0 mirror; existing lock read-only."
+    },
+    {
+      "target": "modules/ingest",
+      "check": "test",
+      "exit_code": 1,
+      "detail": "Blocked before assertions: provider Unix socket setsockopt operation not permitted."
+    },
+    {
+      "target": "modules/farm",
+      "check": "init",
+      "exit_code": 0,
+      "detail": "Backend disabled; existing AWS 6.72.0 mirror; existing lock read-only."
+    },
+    {
+      "target": "modules/farm",
+      "check": "test",
+      "exit_code": 1,
+      "detail": "Blocked before assertions: provider Unix socket setsockopt operation not permitted."
+    }
+  ],
+  "supplementary_expression_cases": {
+    "status": "not_rerun_after_latest_fixes",
+    "prior_results_location": "prior_provider_context_run.supplementary_expression_cases"
+  },
+  "fmt": "passed",
+  "skill_validation": "passed",
+  "partial_module_audit": "passed",
+  "tflint": {
+    "status": "not_rerun_after_latest_fixes",
+    "reason": "Full-script gate not satisfied; prior run retained separately."
+  },
+  "pytest": {
+    "exit_code": 1,
+    "reason": "No module named pytest",
+    "recorded_on": "2026-11-10"
+  },
+  "provider_context_correction": {
+    "previous_procedure_error": "Standalone validate treated aws.project child modules as roots without a calling provider configuration.",
+    "deployed_resources_inferred": false,
+    "standalone_alias_diagnostic_reproduced_in_sandbox": false,
+    "sandbox_diagnostic": "listen unix /tmp/plugin3227873172: setsockopt: operation not permitted",
+    "production_root_mapping": "ingest and farm: aws.project = aws",
+    "sample_mapping": "ingest and farm: aws.project = aws.principal",
+    "unit_mocks": "ingest, farm and security: mock_provider aws with alias project",
+    "integration_mocks": "Default mock_provider aws forwarded by dev module provider mappings",
+    "test_files_byte_for_byte_unchanged": 10,
+    "child_module_provider_blocks_added": false,
+    "validation_roots": [
+      "modules/ingest/sample",
+      "modules/farm/sample",
+      "modules/security/sample",
+      "environments/dev",
+      "environments/test",
+      "environments/prod",
+      "environments/network"
+    ],
+    "previous_report_corrected": true
+  },
+  "prior_provider_context_run": {
+    "provider_targets": [
+      {
+        "target": "modules/ingest",
+        "check": "init",
+        "exit_code": 0,
+        "detail": "Local AWS 6.72.0 mirror; backend disabled."
+      },
+      {
+        "target": "modules/farm",
+        "check": "init",
+        "exit_code": 0,
+        "detail": "Local AWS 6.72.0 mirror; backend disabled."
+      },
+      {
+        "target": "modules/security",
+        "check": "init",
+        "exit_code": 0,
+        "detail": "Local AWS 6.72.0 mirror; backend disabled."
+      },
+      {
+        "target": "modules/network",
+        "check": "init",
+        "exit_code": 0,
+        "detail": "Local AWS 6.72.0 mirror; backend disabled."
+      },
+      {
+        "target": "modules/network/modules/hybrid",
+        "check": "init",
+        "exit_code": 0,
+        "detail": "Local AWS 6.72.0 mirror; backend disabled."
+      },
+      {
+        "target": "modules/ingest/sample",
+        "check": "init",
+        "exit_code": 0,
+        "detail": "Local AWS 6.72.0 mirror; backend disabled."
+      },
+      {
+        "target": "modules/farm/sample",
+        "check": "init",
+        "exit_code": 0,
+        "detail": "Local AWS 6.72.0 mirror; backend disabled."
+      },
+      {
+        "target": "modules/security/sample",
+        "check": "init",
+        "exit_code": 0,
+        "detail": "Local AWS 6.72.0 mirror; backend disabled."
+      },
+      {
+        "target": "environments/dev",
+        "check": "init",
+        "exit_code": 0,
+        "detail": "Local AWS 6.72.0 mirror; backend disabled."
+      },
+      {
+        "target": "environments/test",
+        "check": "init",
+        "exit_code": 0,
+        "detail": "Local AWS 6.72.0 mirror; backend disabled."
+      },
+      {
+        "target": "environments/prod",
+        "check": "init",
+        "exit_code": 0,
+        "detail": "Local AWS 6.72.0 mirror; backend disabled."
+      },
+      {
+        "target": "environments/network",
+        "check": "init",
+        "exit_code": 0,
+        "detail": "Local AWS 6.72.0 mirror; backend disabled."
+      },
+      {
+        "target": "modules/ingest/sample",
+        "check": "validate",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      },
+      {
+        "target": "modules/farm/sample",
+        "check": "validate",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      },
+      {
+        "target": "modules/security/sample",
+        "check": "validate",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      },
+      {
+        "target": "environments/dev",
+        "check": "validate",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      },
+      {
+        "target": "environments/test",
+        "check": "validate",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      },
+      {
+        "target": "environments/prod",
+        "check": "validate",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      },
+      {
+        "target": "environments/network",
+        "check": "validate",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      },
+      {
+        "target": "modules/ingest",
+        "check": "test",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      },
+      {
+        "target": "modules/farm",
+        "check": "test",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      },
+      {
+        "target": "modules/security",
+        "check": "test",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      },
+      {
+        "target": "modules/network",
+        "check": "test",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      },
+      {
+        "target": "modules/network/modules/hybrid",
+        "check": "test",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      },
+      {
+        "target": "environments/dev",
+        "check": "test",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      },
+      {
+        "target": "environments/test",
+        "check": "test",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      },
+      {
+        "target": "environments/prod",
+        "check": "test",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      },
+      {
+        "target": "environments/network",
+        "check": "test",
+        "exit_code": 1,
+        "detail": "Provider IPC socket blocked before schemas/assertions."
+      }
+    ],
+    "tflint": {
+      "version": "0.66.0",
+      "exit_code": 1,
+      "reason": "Installed, but plugin init fails: listen unix /tmp/plugin...: setsockopt: operation not permitted."
+    },
+    "supplementary_expression_cases": {
+      "passed": 9,
+      "failed": 0,
+      "scope": "Production local expressions and variable validations only; no AWS schemas/resources."
+    }
+  },
+  "latest_fix_run": {
+    "targeted_suites": [
+      "modules/ingest",
+      "modules/farm"
+    ],
+    "full_script_attempted": false,
+    "full_script_reason": "Run only after both targeted mocked suites pass; both are blocked before assertions.",
+    "targeted_scenarios_completed": 0,
+    "queue_unknown_dependency": "aws_sqs_queue.dead_letter.arn inside the real jsonencode redrive_policy expression",
+    "plan_overrides": "Distinct queue ARN/id/url only, override_during=plan; no policies or encryption/retention values mocked.",
+    "sensitive_outputs": [
+      "modules/farm:certificate_pem",
+      "modules/farm/sample:farm"
+    ],
+    "dev_reexports_pem": false,
+    "gsi_change": "AWS 6.72.0: replace deprecated GSI hash_key/range_key with equivalent key_schema HASH history_pk and RANGE history_sk.",
+    "versions_and_locks_unchanged": true,
+    "existing_assertions_preserved": true,
+    "new_assertions": [
+      "Real source/DLQ redrive bindings and distinct identities",
+      "Certificate output remains sensitive"
+    ],
+    "fmt": "passed",
+    "git_diff_check": "passed"
+  }
+}

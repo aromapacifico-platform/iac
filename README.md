@@ -116,3 +116,8 @@ root with an explicit account/role and dedicated backend, never the dev profile
 by assumption. See [the network README](modules/network/README.md) for addressing,
 inputs/outputs, both VPN tunnels, Secrets Manager PSK handling, security/DNS
 contracts, mock tests and deployment prerequisites.
+
+
+## Farm and telemetry infrastructure (#24)
+
+The [dev root](environments/dev/README.md) now wires one [farm](modules/farm/README.md) and [ingest](modules/ingest/README.md) pattern to existing network/security contracts. The device's private key stays outside Terraform, MQTT authorization is farm-specific, and the tables have no TTL pending verified five-year archival. See [validation evidence and remaining limits](docs/iac/hu-24-validation.md). Project-specific Codex instructions are in [AGENTS.md](AGENTS.md).
