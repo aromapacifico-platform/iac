@@ -3,8 +3,8 @@
 # ==============================================================================
 
 locals {
-  # Physical naming prefix: ${client}-${project}-${environment}
-  name_prefix = var.name_prefix != "" ? var.name_prefix : "${var.client}-${var.project}-${var.environment}"
+  # Root-built physical naming prefix per PC-IAC-025
+  name_prefix = var.name_prefix
 
   # Physical resource names adhering strictly to <= 28 characters
   bucket_name          = "${local.name_prefix}-s3-focus-conf"

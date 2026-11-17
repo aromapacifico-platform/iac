@@ -32,6 +32,7 @@ variables {
   client           = "fnc"
   project          = "aromapacifico"
   environment      = "dev"
+  name_prefix      = "fnc-aromapacifico-dev"
   vpc_id           = "vpc-12345678"
   ingest_rule_name = "fnc_aromapacifico_dev_telemetry"
 }
@@ -52,5 +53,13 @@ run "ingest_role_contract" {
   assert {
     condition     = alltrue(flatten([for statement in jsondecode(aws_iam_role_policy.ingest.policy).Statement : [for action in statement.Action : !strcontains(action, "*")]]))
     error_message = "Ingestion data actions must have no wildcards."
+  }
+}
+
+run "focus_function_log_group_alignment" {
+  command = plan
+  assert {
+    condition     = [for s in jsondecode(aws_iam_role_policy.focus_function.policy).Statement : s.Resource if s.Sid == "CloudWatchLogsWrite"][0] == "arn:aws:logs:us-east-1:111122223333:log-group:/aws/lambda/fnc-aromapacifico-dev-fn-focus-conf:*"
+    error_message = "Focus function CloudWatch Logs permission must match the -fn-focus-conf log group created by modules/function."
   }
 }

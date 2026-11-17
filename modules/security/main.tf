@@ -256,7 +256,7 @@ resource "aws_iam_role_policy" "focus_function" {
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Resource = "arn:aws:logs:${local.aws_region}:${local.account_id}:log-group:/aws/lambda/${local.name_prefix}-func-focus:*"
+        Resource = "arn:aws:logs:${local.aws_region}:${local.account_id}:log-group:/aws/lambda/${local.focus_function_name}:*"
       },
       {
         Sid    = "VPCAccessExecution"

@@ -48,12 +48,11 @@ variable "inference_model_id" {
 
 variable "name_prefix" {
   type        = string
-  description = "Optional custom physical name prefix. If omitted, constructed from governance variables."
-  default     = ""
+  description = "Root-built physical naming prefix (<client>-<project>-<environment>) per PC-IAC-025."
 
   validation {
-    condition     = length(var.name_prefix) <= 24
-    error_message = "Name prefix must be at most 24 characters to respect PC-IAC-003 constraints."
+    condition     = can(regex("^[a-z0-9-]+$", var.name_prefix)) && length(var.name_prefix) <= 24
+    error_message = "name_prefix must be lowercase alphanumeric with hyphens and at most 24 characters per PC-IAC-003."
   }
 }
 

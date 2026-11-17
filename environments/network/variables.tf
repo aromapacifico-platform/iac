@@ -1,3 +1,58 @@
+variable "client" {
+  description = "Client identifier for landing zone governance (PC-IAC-002)."
+  type        = string
+  default     = "fnc"
+
+  validation {
+    condition     = can(regex("^[a-z0-9-]+$", var.client))
+    error_message = "client must be lowercase alphanumeric with hyphens."
+  }
+}
+
+variable "project" {
+  description = "Project identifier for landing zone governance (PC-IAC-002)."
+  type        = string
+  default     = "aromapacifico"
+
+  validation {
+    condition     = can(regex("^[a-z0-9-]+$", var.project))
+    error_message = "project must be lowercase alphanumeric with hyphens."
+  }
+}
+
+variable "environment" {
+  description = "Logical environment identifier for the central Network root (PC-IAC-002)."
+  type        = string
+  default     = "network"
+
+  validation {
+    condition     = var.environment == "network"
+    error_message = "This root only manages the central network environment."
+  }
+}
+
+variable "aws_region" {
+  description = "Primary AWS region for the central Network hub."
+  type        = string
+  default     = "us-east-1"
+
+  validation {
+    condition     = var.aws_region == "us-east-1"
+    error_message = "The central Network hub must reside in us-east-1."
+  }
+}
+
+variable "owner" {
+  description = "Value of the Propietario tag."
+  type        = string
+  default     = "devops-fnc"
+
+  validation {
+    condition     = contains(["devops-fnc", "seguridad-cloud", "datos-agronomicos"], var.owner)
+    error_message = "owner must be one of the Propietario values of the tag policy."
+  }
+}
+
 variable "network_account_id" {
   description = "Actual AromaPacifico-Network account ID, independently verified by STS."
   type        = string

@@ -1,7 +1,8 @@
 locals {
-  name_prefix = "${var.client}-${var.project}-${var.environment}"
+  name_prefix = var.name_prefix
 
-  ingest_rule_name = var.ingest_rule_name == null ? replace("${local.name_prefix}-telemetry", "-", "_") : var.ingest_rule_name
+  ingest_rule_name    = var.ingest_rule_name == null ? replace("${local.name_prefix}-telemetry", "-", "_") : var.ingest_rule_name
+  focus_function_name = var.focus_function_name == null ? "${local.name_prefix}-fn-focus-conf" : var.focus_function_name
 
   # Standard tags per PC-IAC-004
   common_tags = merge(

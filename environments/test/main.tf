@@ -43,7 +43,9 @@ module "security" {
   public_subnet_ids  = module.network.public_subnet_ids
 
   # E. Resource-specific configuration
+  name_prefix              = local.security_prefix
   ingest_rule_name         = local.ingest_names.rule
+  focus_function_name      = local.focus_function_name
   authorized_private_cidrs = var.security_network.authorized_private_cidrs
   visitor_cidr             = var.security_network.visitor_cidr
   log_authorized_cidr      = var.security_network.log_authorized_cidr

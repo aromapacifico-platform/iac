@@ -38,7 +38,7 @@ endpoint_access = {
   dynamodb = {
     principal_arns = ["arn:aws:iam::273577169715:role/aromapacifico-ci-prod"]
     actions        = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:Query"]
-    resource_arns  = ["arn:aws:dynamodb:us-east-1:273577169715:table/aromapacifico-prod-telemetry"]
+    resource_arns  = ["arn:aws:dynamodb:us-east-1:273577169715:table/fnc-aromapacifico-prod-dynamo-telemetry"]
   }
 }
 

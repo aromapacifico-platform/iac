@@ -1,10 +1,20 @@
 # HU #24 implementation and validation evidence
 
-Historical implementation evidence from 2026-11-10/11. The user previously
-reported seven configured-root validations, 58 provider-mocked test scenarios
-and TFLint passing locally. These are historical results, not a fresh run of the
-current integration. Current review checks are reported with the review response.
-Provider mocks do not establish deployed AWS behavior or a clean AWS plan.
+Implementation evidence updated on the `upgrades` integration branch (including
+the integration of all five modules: `network`, `security`, `ingest`, `farm`,
+and `function` across `environments/{dev,test,prod}`). Historical PR #7 results
+from 2026-11-10/11 included seven configured-root validations and 58
+provider-mocked test scenarios (44 existing + 14 for #24). On `upgrades`, fresh
+local checks additionally verify:
+
+- `modules/security`: 7/7 `terraform test` scenarios passing (`ingest.tftest.hcl` + `security.tftest.hcl`)
+- `modules/function`: 4/4 `terraform test` scenarios passing (`function.tftest.hcl`)
+- `environments/network`: 7/7 `terraform test` scenarios passing (`network.tftest.hcl`)
+- `environments/dev`: 7/7 `terraform test` scenarios passing (`ingest.tftest.hcl` + `network.tftest.hcl`)
+- `environments/{dev,test,prod}`: clean read-only speculative `terraform plan` generating `116 to add, 0 to change, 0 to destroy` across all five modules with `0 errors`.
+
+Provider mocks and speculative plans under Zero-Apply do not provision live AWS
+infrastructure; apply remains strictly disabled for Epic 6.
 
 Scope: Workload E6-05/06, allocated 24 human hours in the Epic 6 plan; this is
 not a measured execution-time claim. The Terraform module and environment tests

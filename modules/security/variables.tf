@@ -191,3 +191,23 @@ variable "ingest_rule_name" {
     error_message = "Use an exact IoT rule name."
   }
 }
+
+variable "focus_function_name" {
+  description = "Exact Lambda function name for focus confirmation CloudWatch Logs permissions; null preserves the conventional -fn-focus-conf name."
+  type        = string
+  default     = null
+  validation {
+    condition     = var.focus_function_name == null ? true : can(regex("^[A-Za-z0-9-_]{1,64}$", var.focus_function_name))
+    error_message = "Use a valid Lambda function name (1 to 64 alphanumeric, hyphen, or underscore characters)."
+  }
+}
+
+variable "name_prefix" {
+  description = "Root-built physical naming prefix (<client>-<project>-<environment>) per PC-IAC-025."
+  type        = string
+
+  validation {
+    condition     = can(regex("^[a-z0-9-]+$", var.name_prefix)) && length(var.name_prefix) <= 28
+    error_message = "name_prefix must be lowercase alphanumeric with hyphens and at most 28 characters."
+  }
+}

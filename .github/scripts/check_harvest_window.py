@@ -35,14 +35,7 @@ except Exception:
     BOGOTA_TZ = timezone(timedelta(hours=-5), name="America/Bogota")
 
 DEFAULT_HARVEST_MONTHS: Tuple[int, ...] = (4, 5, 6, 9, 10, 11)
-BYPASS_LABELS: Tuple[str, ...] = (
-    "incident",
-    "emergency",
-    "hotfix",
-    "incident-override",
-    "harvest-bypass",
-    "critical-fix",
-)
+BYPASS_LABELS: Tuple[str, ...] = ("incident",)
 BYPASS_ENV_VARS: Tuple[str, ...] = (
     "EMERGENCY_OVERRIDE",
     "INCIDENT_FLAG",
@@ -180,10 +173,8 @@ def check_bypass(
 
     for label in labels_to_check:
         normalized = label.strip().lower()
-        if normalized in BYPASS_LABELS or any(
-            bp in normalized for bp in ("incident", "emergency", "hotfix")
-        ):
-            return True, f"Emergency bypass granted via label: '{label}'."
+        if normalized in BYPASS_LABELS:
+            return True, f"Emergency bypass granted via official label: '{label}'."
 
     return False, ""
 
@@ -231,7 +222,7 @@ def evaluate_harvest_window(
             f"BLOCKED: Deployment frozen. Current time {dt.strftime('%H:%M:%S')} "
             f"is within 05:00:00 - 18:00:00 (America/Bogota, UTC-5) during harvest "
             f"season (month {dt.month}, week {dt.isocalendar()[1]}). "
-            f"To bypass, tag with 'incident', 'emergency', or pass an approved override flag."
+            f"To bypass, tag with the official 'incident' label or pass an approved override flag."
         )
 
     return {
