@@ -43,8 +43,8 @@ output "cloudwatch_log_group_arn" {
 }
 
 output "iam_role_arn" {
-  description = "Effective IAM role ARN utilized by the focus confirmation function."
-  value       = local.effective_role_arn
+  description = "Security-owned IAM role ARN utilized by the focus confirmation function."
+  value       = var.iam_role_arn
 }
 
 output "retry_attempts" {

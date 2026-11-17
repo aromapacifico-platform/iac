@@ -98,136 +98,8 @@ resource "aws_cloudwatch_log_group" "this" {
 }
 
 # ==============================================================================
-# Dedicated Platform IAM Role & Strict Least-Privilege Policies (Issue #25)
-# ==============================================================================
-
-resource "aws_iam_role" "this" {
-  provider = aws.project
-  count    = var.create_iam_role ? 1 : 0
-
-  name        = local.iam_role_name
-  description = "Execution role for focus confirmation Lambda function with scoped permissions"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
-  })
-
-  tags = merge(
-    local.common_tags,
-    {
-      Name = local.iam_role_name
-    }
-  )
-}
-
-resource "aws_iam_role_policy" "this" {
-  provider = aws.project
-  count    = var.create_iam_role ? 1 : 0
-
-  name = local.iam_policy_name
-  role = aws_iam_role.this[0].id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      # 1. Permiso 1: Lectura exclusiva del objeto de confirmación en el bucket S3
-      {
-        Sid    = "S3ReadConfirmationObject"
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:GetObjectVersion"
-        ]
-        Resource = "${aws_s3_bucket.this.arn}/*"
-      },
-      # 2. Permiso 2: Escritura del resultado en el expediente fitosanitario en DynamoDB
-      # CRITERIO DE ACEPTACIÓN MANDATORIO: Nada en el módulo puede cambiar el estado de una orden de fumigación.
-      # El permiso se acota estrictamente a la tabla de expedientes; prohibido el acceso a la tabla ordenes_fumigacion.
-      {
-        Sid    = "DynamoDBWriteExpediente"
-        Effect = "Allow"
-        Action = [
-          "dynamodb:PutItem",
-          "dynamodb:UpdateItem"
-        ]
-        Resource = "arn:${local.partition}:dynamodb:${local.aws_region}:${local.account_id}:table/${var.expedientes_table_name}"
-      },
-      # 3. Permiso 3: Filtro ético perimetral anti-PII con Amazon Rekognition
-      {
-        # Rekognition does not support resource-level permissions for these calls.
-        Sid    = "RekognitionPersonFilter"
-        Effect = "Allow"
-        Action = [
-          "rekognition:DetectFaces",
-          "rekognition:DetectLabels"
-        ]
-        Resource = "*"
-      },
-      # 4. Permiso 4: Diagnóstico fitosanitario foliar multimodal administrado con Amazon Bedrock
-      {
-        Sid      = "BedrockLeafDiagnosis"
-        Effect   = "Allow"
-        Action   = ["bedrock:InvokeModel"]
-        Resource = "arn:${local.partition}:bedrock:${local.aws_region}::foundation-model/${var.inference_model_id}"
-      },
-      # 4. Auditoría y Trazabilidad en CloudWatch Logs
-      {
-        Sid    = "CloudWatchLogsWrite"
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ]
-        Resource = "${aws_cloudwatch_log_group.this.arn}:*"
-      },
-      # 5. Enrutamiento hacia Cola de Fallos (DLQ)
-      {
-        Sid    = "SQSSendDeadLetterQueue"
-        Effect = "Allow"
-        Action = [
-          "sqs:SendMessage"
-        ]
-        Resource = aws_sqs_queue.dlq.arn
-      },
-      # 6. Desencriptación y Cifrado mediante llaves KMS administradas
-      {
-        Sid    = "KMSDataAndObjectsOperations"
-        Effect = "Allow"
-        Action = [
-          "kms:Decrypt",
-          "kms:GenerateDataKey*"
-        ]
-        Resource = [
-          var.kms_key_objects_arn,
-          var.kms_key_data_arn
-        ]
-      },
-      # 7. Gestión de ENI para ejecución en subredes privadas (VPC) cuando corresponda (PC-IAC-020)
-      {
-        Sid    = "VPCNetworkInterfaceManagement"
-        Effect = "Allow"
-        Action = [
-          "ec2:CreateNetworkInterface",
-          "ec2:DescribeNetworkInterfaces",
-          "ec2:DeleteNetworkInterface"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-# ==============================================================================
-# Lambda Serverless Compute - Pattern FN-CONF-FOCO (PC-IAC-020, Issue #25)
+# Lambda Serverless Compute - Pattern FN-CONF-FOCO (PC-IAC-020, PC-IAC-022, Issue #25)
+# IAM Role is owned by the Security domain and injected via var.iam_role_arn.
 # ==============================================================================
 
 resource "aws_lambda_function" "this" {
@@ -235,7 +107,7 @@ resource "aws_lambda_function" "this" {
 
   function_name    = local.lambda_function_name
   description      = "Pattern serverless function for agricultural rust spot confirmation and fitosanitary record updates"
-  role             = local.effective_role_arn
+  role             = var.iam_role_arn
   runtime          = "python3.12"
   handler          = "handler.lambda_handler"
   filename         = data.archive_file.lambda_zip.output_path

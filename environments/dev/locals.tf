@@ -32,8 +32,9 @@ locals {
     })
   }
 
-  security_prefix = "${var.client}-${var.project}-${var.environment}"
-  thing_name      = "${local.security_prefix}-thing-${lower(var.farm_id)}"
+  security_prefix        = "${var.client}-${var.project}-${var.environment}"
+  thing_name             = "${local.security_prefix}-thing-${lower(var.farm_id)}"
+  expedientes_table_name = "${local.security_prefix}-dynamo-expedientes"
   ingest_names = {
     telemetry  = "${local.security_prefix}-dynamo-telemetry"
     thresholds = "${local.security_prefix}-dynamo-thresholds"

@@ -29,3 +29,29 @@ output "network" {
     s3_interface_endpoint            = module.network.s3_interface_endpoint
   }
 }
+
+output "ingest" {
+  description = "Reception contracts; no alert or persistence ACK SLA is implied."
+  value = {
+    tables          = module.ingest.tables
+    mqtt_topics     = module.ingest.mqtt_topics
+    config_topic    = module.ingest.config_topic
+    error_queue_url = module.ingest.error_queue_url
+  }
+}
+
+output "farm" {
+  description = "Single pattern farm identity and certificate ARN."
+  value       = { thing_name = module.farm.thing_name, certificate_arn = module.farm.certificate_arn }
+}
+
+output "function" {
+  description = "Focus confirmation function contracts (E6-07)."
+  value = {
+    s3_bucket_id         = module.function.s3_bucket_id
+    lambda_function_name = module.function.lambda_function_name
+    lambda_function_arn  = module.function.lambda_function_arn
+    sqs_dlq_arn          = module.function.sqs_dlq_arn
+    iam_role_arn         = module.function.iam_role_arn
+  }
+}

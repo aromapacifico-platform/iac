@@ -20,6 +20,7 @@ module "function" {
   name_prefix         = local.name_prefix
   kms_key_objects_arn = var.mock_kms_key_objects_arn
   kms_key_data_arn    = var.mock_kms_key_data_arn
+  iam_role_arn        = var.mock_iam_role_arn
 
   # Grupo E: Variables Específicas
   expedientes_table_name = var.expedientes_table_name

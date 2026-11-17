@@ -1,17 +1,13 @@
-locals {
-  center_id = "ACOPIO-${lookup({ "41" = "CAUCA", "42" = "HUILA", "43" = "TOLIMA" }, tostring(var.collection_center_department), "INVALID")}"
-  operational_cidrs = {
-    logistics = "10.${var.collection_center_department}.3.0/24"
-    servers   = "10.${var.collection_center_department}.10.0/24"
-  }
-}
-
 resource "aws_customer_gateway" "this" {
   count      = var.connection == null ? 0 : 1
   bgp_asn    = 65000 + var.collection_center_department
   ip_address = var.connection.customer_gateway_public_ip
   type       = "ipsec.1"
   tags       = { Name = "${var.name_prefix}-cgw", AcopioID = local.center_id }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_vpn_connection" "this" {
@@ -55,6 +51,10 @@ resource "aws_vpn_connection" "this" {
     }
   }
   tags = { Name = "${var.name_prefix}-vpn", AcopioID = local.center_id }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_ec2_transit_gateway_vpc_attachment_accepter" "production" {

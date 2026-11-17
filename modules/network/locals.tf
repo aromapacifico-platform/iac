@@ -86,8 +86,7 @@ locals {
       servers   = "10.${var.collection_center_department}.10.0/24"
     }
   }
-}
-locals {
+
   internal_subnets = { for key, subnet in local.subnets : key => subnet if subnet.category != "public_query" }
   hybrid_routes = var.transit_gateway_id == null ? {} : merge([
     for key, subnet in local.internal_subnets : {
@@ -95,4 +94,13 @@ locals {
       "${key}_${purpose}" => { subnet_key = key, cidr = cidr }
     }
   ]...)
+
+  common_tags = merge(
+    var.additional_tags,
+    {
+      Module    = "modules/network"
+      Component = "Networking"
+      ManagedBy = "Terraform"
+    }
+  )
 }

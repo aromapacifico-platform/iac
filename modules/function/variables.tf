@@ -169,25 +169,13 @@ variable "log_retention_in_days" {
   }
 }
 
-variable "create_iam_role" {
-  type        = bool
-  description = "Whether to create a dedicated IAM role for the Lambda function within this module."
-  default     = true
-
-  validation {
-    condition     = contains([true, false], var.create_iam_role)
-    error_message = "create_iam_role must be a boolean."
-  }
-}
-
-variable "custom_iam_role_arn" {
+variable "iam_role_arn" {
   type        = string
-  description = "External IAM role ARN to attach to Lambda when create_iam_role is false."
-  default     = ""
+  description = "Security-owned IAM role ARN for the focus confirmation Lambda function (PC-IAC-022)."
 
   validation {
-    condition     = var.custom_iam_role_arn == "" || can(regex("^arn:aws:iam::[0-9]{12}:role/[a-zA-Z0-9+=,.@_-]+$", var.custom_iam_role_arn))
-    error_message = "Custom IAM role ARN must be empty or a valid AWS IAM role ARN."
+    condition     = can(regex("^arn:aws:iam::[0-9]{12}:role/[a-zA-Z0-9+=,.@_-]+$", var.iam_role_arn))
+    error_message = "iam_role_arn must be a valid AWS IAM role ARN."
   }
 }
 

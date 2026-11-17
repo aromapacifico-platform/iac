@@ -116,3 +116,14 @@ variable "s3_interface" {
     error_message = "S3 interface access requires a security-owned SG ID and a valid JSON endpoint policy."
   }
 }
+
+variable "additional_tags" {
+  description = "Additional resource-specific tags merged with Layer 2 module tags (PC-IAC-004)."
+  type        = map(string)
+  default     = {}
+
+  validation {
+    condition     = can(keys(var.additional_tags))
+    error_message = "additional_tags must be a valid key-value map."
+  }
+}

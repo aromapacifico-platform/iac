@@ -202,7 +202,7 @@ resource "aws_iam_role_policy" "focus_function" {
           "s3:GetObject",
           "s3:GetObjectVersion"
         ]
-        Resource = "arn:aws:s3:::${var.client}-${var.project}-${var.environment}-focus/*"
+        Resource = "arn:aws:s3:::${local.name_prefix}-s3-focus-conf/*"
       },
       {
         # Rekognition does not support resource-level permissions for these calls.
@@ -642,15 +642,16 @@ resource "aws_security_group" "resolver_in" {
 # Standalone Ingress / Egress Rules (Rule Catalog C01-C20, Invariants C21, C22)
 # ==============================================================================
 
-# Rule C01: SG-ALB-CONSULTA Ingress from 0.0.0.0/0 on 443
+# Rule C01: SG-ALB-CONSULTA Ingress from CloudFront Prefix List (or 0.0.0.0/0 fallback) on 443
 resource "aws_vpc_security_group_ingress_rule" "c01" {
   provider          = aws.project
   security_group_id = aws_security_group.alb_query.id
-  description       = "C01: Public HTTPS ingress to sack query ALB"
+  description       = "C01: HTTPS ingress to sack query ALB from CloudFront origin-facing prefix list"
   ip_protocol       = "tcp"
   from_port         = 443
   to_port           = 443
-  cidr_ipv4         = "0.0.0.0/0"
+  prefix_list_id    = var.cloudfront_prefix_list_id
+  cidr_ipv4         = var.cloudfront_prefix_list_id == null ? "0.0.0.0/0" : null
 }
 
 # Rule C02: SG-ALB-CONSULTA Egress to SG-CONSULTA on 443

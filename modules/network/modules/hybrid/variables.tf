@@ -1,6 +1,11 @@
 variable "name_prefix" {
   description = "Central connection name prefix."
   type        = string
+
+  validation {
+    condition     = length(trimspace(var.name_prefix)) > 0
+    error_message = "name_prefix must not be empty."
+  }
 }
 variable "transit_gateway_id" {
   description = "Central TGW ID; required only for an enabled connection."

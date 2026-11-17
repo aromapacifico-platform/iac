@@ -118,6 +118,11 @@ variable "s3_interface_security_group_id" {
   description = "Security-owned vpce_s3 SG in this VPC; null disables the optional hybrid S3 endpoint."
   type        = string
   default     = null
+
+  validation {
+    condition     = var.s3_interface_security_group_id == null ? true : can(regex("^sg-[a-z0-9]+$", var.s3_interface_security_group_id))
+    error_message = "s3_interface_security_group_id must be null or a valid security group ID (sg-xxx)."
+  }
 }
 
 variable "client" {

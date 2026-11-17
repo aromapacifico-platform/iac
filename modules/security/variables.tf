@@ -171,6 +171,17 @@ variable "inference_model_id" {
   }
 }
 
+variable "cloudfront_prefix_list_id" {
+  description = "Optional AWS CloudFront origin-facing Managed Prefix List ID for rule C01 (Consolidation Decision #1). When null, falls back to 0.0.0.0/0."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.cloudfront_prefix_list_id == null ? true : can(regex("^pl-[0-9a-f]+$", var.cloudfront_prefix_list_id))
+    error_message = "cloudfront_prefix_list_id must be null or a valid AWS prefix list ID (pl-xxxxxxxx)."
+  }
+}
+
 variable "ingest_rule_name" {
   description = "Exact IoT rule allowed to assume the ingestion role; null preserves the conventional name."
   type        = string

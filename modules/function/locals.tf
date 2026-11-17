@@ -10,16 +10,11 @@ locals {
   bucket_name          = "${local.name_prefix}-s3-focus-conf"
   dlq_name             = "${local.name_prefix}-sqs-focus-dlq"
   lambda_function_name = "${local.name_prefix}-fn-focus-conf"
-  iam_role_name        = "${local.name_prefix}-role-focus-fn"
-  iam_policy_name      = "${local.name_prefix}-pol-focus-fn"
 
   # AWS Context
   account_id = data.aws_caller_identity.current.account_id
   aws_region = data.aws_region.current.region
   partition  = data.aws_partition.current.partition
-
-  # Effective IAM Role ARN
-  effective_role_arn = var.create_iam_role ? aws_iam_role.this[0].arn : var.custom_iam_role_arn
 
   # Common Tagging (PC-IAC-004 Layer 2)
   common_tags = merge(

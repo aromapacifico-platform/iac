@@ -1,4 +1,5 @@
 mock_provider "aws" {
+  alias           = "project"
   override_during = plan
   mock_resource "aws_ec2_transit_gateway_vpc_attachment" {
     defaults = { id = "tgw-attach-0123456789abcdef0" }
