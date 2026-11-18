@@ -1,29 +1,31 @@
 """
-AromaPacífico - Función Serverless Patrón: Confirmación del Foco (FN-CONF-FOCO)
-Federación Nacional de Cafeteros (FNC 2026) - Épica 6 · Parte E · Caja E6-06
+AromaPacifico - Serverless Function Pattern: Focus Confirmation (FN-CONF-FOCO)
+Federacion Nacional de Cafeteros (FNC 2026) - Epic 6 / Part E / Box E6-07
 
-Propósito:
-Procesa la evidencia fotográfica recolectada por el dron agrícola (Servicio S2),
-aplica filtro perimetral ético anti-PII con Amazon Rekognition (Ley 1581 de 2012),
-diagnostica la hoja con Amazon Bedrock Multimodal Vision (sin entrenamiento propio y
-cero cómputo en espera, planning #16 y #17), y persiste el diagnóstico en el expediente digital.
+Purpose:
+Processes photographic evidence collected by the agricultural drone (Service S2),
+applies an ethical perimeter anti-PII filter with Amazon Rekognition (Colombian Law 1581 of 2012),
+diagnoses coffee leaf health with Amazon Bedrock Multimodal Vision (zero custom model training
+and zero idle compute, planning #16 and #17), and persists the diagnostic record to DynamoDB.
 
-Invariantes Críticas:
-1. Cero Mutación Destructiva: Si falla la inferencia, el objeto S3 permanece intacto.
-2. Zero Trust en Fumigación: La función NUNCA autoriza fumigaciones. La autorización
-   es competencia exclusiva de un agrónomo titular FNC colegiado con autenticación MFA.
+Critical Invariants:
+1. Non-Destructive Failure Handling: If inference fails, the source S3 object remains untouched.
+2. Zero Trust Fumigation Gate: This function NEVER authorizes fumigation orders.
+   Authorization is exclusively performed by a credentialed FNC agronomist with MFA.
 """
 
-import os
 import json
 import logging
+import os
 import urllib.parse
 from datetime import datetime, timezone
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-EXPEDIENTES_TABLE_NAME = os.environ.get("EXPEDIENTES_TABLE_NAME", "fnc-aromapacifico-dev-dynamo-expedientes")
+EXPEDIENTES_TABLE_NAME = os.environ.get(
+    "EXPEDIENTES_TABLE_NAME", "fnc-aromapacifico-dev-dynamo-expedientes"
+)
 REKOGNITION_MIN_CONFIDENCE = float(os.environ.get("REKOGNITION_MIN_CONFIDENCE", "50.0"))
 INFERENCE_MODEL_ID = os.environ.get("INFERENCE_MODEL_ID", "amazon.nova-lite-v1:0")
 AWS_REGION = os.environ.get("AWS_REGION", os.environ.get("AWS_DEFAULT_REGION", "us-east-1"))
@@ -32,15 +34,17 @@ ENVIRONMENT = os.environ.get("ENVIRONMENT", "desarrollo")
 
 def filter_pii_with_rekognition(bucket_name, object_key):
     """
-    Filtro ético perimetral anti-PII con Amazon Rekognition (Ley 1581 de 2012).
-    Evalúa presencia de rostros o personas identificables (DetectFaces / DetectLabels).
+    Perimeter ethical anti-PII filter using Amazon Rekognition (Law 1581 of 2012).
+    Evaluates presence of human faces or identifiable individuals (DetectFaces / DetectLabels).
     """
-    logger.info("Ejecutando filtro anti-PII con Rekognition sobre s3://%s/%s", bucket_name, object_key)
-    # Verificación perimetral anti-PII
+    logger.info(
+        "Running Rekognition anti-PII filter on s3://%s/%s", bucket_name, object_key
+    )
+    # Perimeter anti-PII check before sending imagery to agronomic inference
     if "worker" in object_key.lower() or "person" in object_key.lower():
         logger.warning(
-            "ALERTA PII: Se detectó presencia humana en la imagen %s. Derivando a cuarentena.",
-            object_key
+            "PII ALERT: Human presence detected in image %s. Routing to quarantine.",
+            object_key,
         )
         return True
     return False
@@ -48,17 +52,19 @@ def filter_pii_with_rekognition(bucket_name, object_key):
 
 def diagnose_leaf_with_bedrock(bucket_name, object_key, model_id):
     """
-    Diagnóstico fitosanitario foliar con Amazon Bedrock (planning #16 y #17).
-    Invoca el modelo fundacional multimodal vía bedrock:InvokeModel para evaluar
-    signos de Hemileia vastatrix (roya) o Hypothenemus hampei (broca).
-    Zero cómputo en espera (Pay-per-Call) y cero entrenamiento propio.
+    Foliar phytosanitary diagnosis using Amazon Bedrock (planning #16 and #17).
+    Invokes the multimodal foundation model via bedrock:InvokeModel to assess
+    signs of Hemileia vastatrix (leaf rust) or Hypothenemus hampei (coffee berry borer).
+    Zero idle compute (Pay-per-Call) and zero custom model training.
     """
     logger.info(
-        "Invocando Amazon Bedrock (modelo: %s) para diagnóstico foliar sobre s3://%s/%s",
-        model_id, bucket_name, object_key
+        "Invoking Amazon Bedrock (model: %s) for foliar diagnosis on s3://%s/%s",
+        model_id,
+        bucket_name,
+        object_key,
     )
 
-    # Simulación controlada determinista de inferencia multimodal
+    # Controlled deterministic simulation of multimodal inference output
     diagnostic_label = "ROYA_NIVEL_2"
     confidence_score = 92.4
     affected_area_pct = 18.5
@@ -72,17 +78,18 @@ def diagnose_leaf_with_bedrock(bucket_name, object_key, model_id):
         "affected_area_pct": affected_area_pct,
         "severity": severity,
         "evaluator_arn": evaluator_arn,
-        "model_id": model_id
+        "model_id": model_id,
     }
 
 
 def lambda_handler(event, context):
-    logger.info("Iniciando procesamiento de evento de confirmación de foco fitosanitario")
-    logger.info("Payload recibido: %s", json.dumps(event))
+    """Handle S3 ObjectCreated events for focus confirmation imagery."""
+    logger.info("Starting phytosanitary focus confirmation event processing")
+    logger.info("Received payload: %s", json.dumps(event))
 
     records = event.get("Records", [])
     if not records:
-        logger.warning("No se recibieron registros de eventos S3 en el payload")
+        logger.warning("No S3 event records received in payload")
         return {"statusCode": 200, "body": "No records to process"}
 
     processed_results = []
@@ -93,24 +100,32 @@ def lambda_handler(event, context):
         raw_key = s3_data.get("object", {}).get("key", "")
         object_key = urllib.parse.unquote_plus(raw_key)
 
-        logger.info("Procesando imagen fotográfica desde bucket: %s, clave: %s", bucket_name, object_key)
+        logger.info(
+            "Processing photographic evidence from bucket: %s, key: %s",
+            bucket_name,
+            object_key,
+        )
 
-        # 1. Filtro ético perimetral anti-PII (Amazon Rekognition)
+        # 1. Perimeter ethical anti-PII filter (Amazon Rekognition)
         pii_detected = filter_pii_with_rekognition(bucket_name, object_key)
         if pii_detected:
-            processed_results.append({
-                "object_key": object_key,
-                "status": "PII_DETECTED_BLOQUEADO",
-                "requiere_atencion_humana": True
-            })
+            processed_results.append(
+                {
+                    "object_key": object_key,
+                    "status": "PII_DETECTED_BLOQUEADO",
+                    "requiere_atencion_humana": True,
+                }
+            )
             continue
 
-        # 2. Diagnóstico fitosanitario foliar con Amazon Bedrock (después del filtro de personas)
-        bedrock_result = diagnose_leaf_with_bedrock(bucket_name, object_key, INFERENCE_MODEL_ID)
+        # 2. Foliar phytosanitary diagnosis with Amazon Bedrock (only after person check passes)
+        bedrock_result = diagnose_leaf_with_bedrock(
+            bucket_name, object_key, INFERENCE_MODEL_ID
+        )
 
-        # 3. Construcción del registro atómico para el Expediente Fitosanitario en DynamoDB
-        # INVARIANTE MANDATORIA ZERO TRUST: Ningún campo autoriza fumigación.
-        # OrdenFumigacionID es estrictamente None y AutorizadoFumigacion es False.
+        # 3. Build atomic record for the DynamoDB phytosanitary expediente
+        # MANDATORY ZERO TRUST INVARIANT: No field authorizes fumigation.
+        # OrdenFumigacionID is strictly None and AutorizadoFumigacion is False.
         timestamp_utc = datetime.now(timezone.utc).isoformat()
         expediente_item = {
             "FincaID": "FINCA-GLOBAL",
@@ -128,25 +143,33 @@ def lambda_handler(event, context):
             "OrdenFumigacionID": None,
             "AutorizadoFumigacion": False,
             "ObservacionAgronomica": (
-                f"Diagnóstico fitosanitario asistido por Amazon Bedrock ({INFERENCE_MODEL_ID}). "
-                "Pendiente valoración y validación agronómica humana colegiada."
-            )
+                f"Phytosanitary diagnosis assisted by Amazon Bedrock ({INFERENCE_MODEL_ID}). "
+                "Pending human agronomic validation by a licensed FNC agronomist."
+            ),
         }
 
-        logger.info("Registro generado para tabla %s: %s", EXPEDIENTES_TABLE_NAME, json.dumps(expediente_item))
-        processed_results.append({
-            "object_key": object_key,
-            "status": "CONFIRMADO",
-            "diagnostic_label": bedrock_result["diagnostic_label"],
-            "confidence_score": bedrock_result["confidence_score"],
-            "model_id": bedrock_result["model_id"],
-            "autorizado_fumigacion": False
-        })
+        logger.info(
+            "Generated expediente record for table %s: %s",
+            EXPEDIENTES_TABLE_NAME,
+            json.dumps(expediente_item),
+        )
+        processed_results.append(
+            {
+                "object_key": object_key,
+                "status": "CONFIRMADO",
+                "diagnostic_label": bedrock_result["diagnostic_label"],
+                "confidence_score": bedrock_result["confidence_score"],
+                "model_id": bedrock_result["model_id"],
+                "autorizado_fumigacion": False,
+            }
+        )
 
     return {
         "statusCode": 200,
-        "body": json.dumps({
-            "message": "Eventos de confirmación de foco procesados exitosamente",
-            "results": processed_results
-        })
+        "body": json.dumps(
+            {
+                "message": "Focus confirmation events processed successfully",
+                "results": processed_results,
+            }
+        ),
     }

@@ -1,16 +1,6 @@
 # One state bucket and one KMS key per workload account. Run once per account
 # before the first `terraform init` of its environment.
 
-locals {
-  ambiente = {
-    dev  = "desarrollo"
-    test = "pruebas"
-    prod = "produccion"
-  }
-
-  bucket_name = coalesce(var.state_bucket_name, "aromapacifico-tfstate-${var.environment}")
-}
-
 data "aws_caller_identity" "current" {}
 
 data "aws_iam_policy_document" "state_key" {
@@ -31,6 +21,14 @@ resource "aws_kms_key" "state" {
   enable_key_rotation     = true
   deletion_window_in_days = 30
   policy                  = data.aws_iam_policy_document.state_key.json
+
+  tags = {
+    Name = "aromapacifico-${var.environment}-kms-tfstate"
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_kms_alias" "state" {
@@ -40,6 +38,14 @@ resource "aws_kms_alias" "state" {
 
 resource "aws_s3_bucket" "state" {
   bucket = local.bucket_name
+
+  tags = {
+    Name = local.bucket_name
+  }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_s3_bucket_ownership_controls" "state" {

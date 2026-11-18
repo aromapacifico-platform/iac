@@ -82,7 +82,7 @@ output "rule_catalog" {
       id          = "C01"
       control     = "SG-IN"
       parent_id   = aws_security_group.alb_query.id
-      source      = "0.0.0.0/0"
+      source      = coalesce(var.cloudfront_prefix_list_id, "0.0.0.0/0")
       destination = "SG-ALB-CONSULTA"
       protocol    = "tcp"
       from_port   = 443

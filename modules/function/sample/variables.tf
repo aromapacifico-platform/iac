@@ -90,6 +90,17 @@ variable "mock_kms_key_data_arn" {
   }
 }
 
+variable "mock_iam_role_arn" {
+  type        = string
+  description = "Mock Security-owned IAM role ARN for sample validation (PC-IAC-022)."
+  default     = "arn:aws:iam::111122223333:role/fnc-aromapac-dev-role-focus-fn"
+
+  validation {
+    condition     = can(regex("^arn:aws:iam::[0-9]{12}:role/[a-zA-Z0-9+=,.@_-]+$", var.mock_iam_role_arn))
+    error_message = "Must be a valid AWS IAM role ARN."
+  }
+}
+
 variable "additional_tags" {
   type        = map(string)
   description = "Additional tags to merge."

@@ -85,3 +85,59 @@ run "reject_all_dynamodb_tables" {
   }
   expect_failures = [var.endpoint_access]
 }
+
+run "gateway_endpoint_policies_authorize_environment_modules" {
+  command = plan
+
+  assert {
+    condition = contains(
+      flatten([
+        for stmt in jsondecode(local.gateway_endpoint_policies["s3"]).Statement :
+        stmt.Sid == "FocusFunctionS3Access" ? stmt.Principal.AWS : []
+      ]),
+      "arn:aws:iam::111122223333:role/fnc-aromapacifico-dev-role-focus-func"
+      ) && contains(
+      flatten([
+        for stmt in jsondecode(local.gateway_endpoint_policies["s3"]).Statement :
+        stmt.Sid == "FocusFunctionS3Access" ? stmt.Resource : []
+      ]),
+      "arn:aws:s3:::fnc-aromapacifico-dev-s3-focus-conf/*"
+    )
+    error_message = "S3 Gateway Endpoint policy must authorize role-focus-func on the environment focus confirmation bucket."
+  }
+
+  assert {
+    condition = length(setintersection(
+      toset(flatten([
+        for stmt in jsondecode(local.gateway_endpoint_policies["dynamodb"]).Statement : stmt.Principal.AWS
+      ])),
+      toset([
+        "arn:aws:iam::111122223333:role/fnc-aromapacifico-dev-role-ingest",
+        "arn:aws:iam::111122223333:role/fnc-aromapacifico-dev-role-focus-func",
+        "arn:aws:iam::111122223333:role/fnc-aromapacifico-dev-role-delivery"
+      ])
+      )) == 3 && length(setintersection(
+      toset(flatten([
+        for stmt in jsondecode(local.gateway_endpoint_policies["dynamodb"]).Statement : stmt.Resource
+      ])),
+      toset([
+        "arn:aws:dynamodb:us-east-1:111122223333:table/fnc-aromapacifico-dev-dynamo-telemetry",
+        "arn:aws:dynamodb:us-east-1:111122223333:table/fnc-aromapacifico-dev-dynamo-thresholds",
+        "arn:aws:dynamodb:us-east-1:111122223333:table/fnc-aromapacifico-dev-dynamo-expedientes",
+        "arn:aws:dynamodb:us-east-1:111122223333:table/fnc-aromapacifico-dev-dynamo-sacos"
+      ])
+    )) == 4
+    error_message = "DynamoDB Gateway Endpoint policy must authorize ingest, focus_function and delivery roles over all four environment tables."
+  }
+
+  assert {
+    condition = alltrue([
+      for svc in ["s3", "dynamodb"] : alltrue([
+        for stmt in jsondecode(local.gateway_endpoint_policies[svc]).Statement :
+        !contains(stmt.Principal.AWS, "*") &&
+        alltrue([for act in stmt.Action : !can(regex("[*?]", act))])
+      ])
+    ])
+    error_message = "Gateway Endpoint policies must never use wildcard principals or actions."
+  }
+}

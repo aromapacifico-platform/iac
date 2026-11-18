@@ -171,6 +171,17 @@ variable "inference_model_id" {
   }
 }
 
+variable "cloudfront_prefix_list_id" {
+  description = "Optional AWS CloudFront origin-facing Managed Prefix List ID for rule C01 (Consolidation Decision #1). When null, falls back to 0.0.0.0/0."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.cloudfront_prefix_list_id == null ? true : can(regex("^pl-[0-9a-f]+$", var.cloudfront_prefix_list_id))
+    error_message = "cloudfront_prefix_list_id must be null or a valid AWS prefix list ID (pl-xxxxxxxx)."
+  }
+}
+
 variable "ingest_rule_name" {
   description = "Exact IoT rule allowed to assume the ingestion role; null preserves the conventional name."
   type        = string
@@ -178,5 +189,25 @@ variable "ingest_rule_name" {
   validation {
     condition     = var.ingest_rule_name == null ? true : can(regex("^[A-Za-z][A-Za-z0-9_]{0,127}$", var.ingest_rule_name))
     error_message = "Use an exact IoT rule name."
+  }
+}
+
+variable "focus_function_name" {
+  description = "Exact Lambda function name for focus confirmation CloudWatch Logs permissions; null preserves the conventional -fn-focus-conf name."
+  type        = string
+  default     = null
+  validation {
+    condition     = var.focus_function_name == null ? true : can(regex("^[A-Za-z0-9-_]{1,64}$", var.focus_function_name))
+    error_message = "Use a valid Lambda function name (1 to 64 alphanumeric, hyphen, or underscore characters)."
+  }
+}
+
+variable "name_prefix" {
+  description = "Root-built physical naming prefix (<client>-<project>-<environment>) per PC-IAC-025."
+  type        = string
+
+  validation {
+    condition     = can(regex("^[a-z0-9-]+$", var.name_prefix)) && length(var.name_prefix) <= 28
+    error_message = "name_prefix must be lowercase alphanumeric with hyphens and at most 28 characters."
   }
 }

@@ -43,3 +43,14 @@ output "farm" {
   description = "Single pattern farm identity and certificate ARN."
   value       = { thing_name = module.farm.thing_name, certificate_arn = module.farm.certificate_arn }
 }
+
+output "function" {
+  description = "Focus confirmation function contracts (E6-07)."
+  value = {
+    s3_bucket_id         = module.function.s3_bucket_id
+    lambda_function_name = module.function.lambda_function_name
+    lambda_function_arn  = module.function.lambda_function_arn
+    sqs_dlq_arn          = module.function.sqs_dlq_arn
+    iam_role_arn         = module.function.iam_role_arn
+  }
+}

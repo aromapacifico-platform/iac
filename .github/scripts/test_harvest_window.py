@@ -209,17 +209,18 @@ class TestEmergencyBypass:
         assert res["bypassed"]
         assert "incident" in res["reason"].lower()
 
-    def test_bypass_via_cli_label_hotfix(self) -> None:
+    def test_no_bypass_for_non_official_cli_labels(self) -> None:
         dt = datetime(2026, 10, 15, 14, 0, 0, tzinfo=BOGOTA_TZ)
-        res = evaluate_harvest_window(dt, cli_labels=["hotfix", "documentation"])
-        assert res["allowed"]
-        assert res["bypassed"]
+        for label in ("hotfix", "emergency", "harvest-bypass", "not-an-incident"):
+            res = evaluate_harvest_window(dt, cli_labels=[label, "documentation"])
+            assert not res["allowed"]
+            assert not res["bypassed"]
 
     def test_bypass_via_env_labels(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("PR_LABELS", "bug,emergency,database")
+        monkeypatch.setenv("PR_LABELS", "bug,incident,database")
         bypassed, reason = check_bypass()
         assert bypassed
-        assert "emergency" in reason
+        assert "incident" in reason
 
     def test_bypass_via_github_event_file_pull_request(
         self, tmp_path: Path
@@ -244,7 +245,7 @@ class TestEmergencyBypass:
         payload = {
             "issue": {
                 "number": 101,
-                "labels": [{"name": "hotfix"}],
+                "labels": [{"name": "incident"}],
             }
         }
         event_file = tmp_path / "issue_event.json"
@@ -252,7 +253,7 @@ class TestEmergencyBypass:
 
         bypassed, reason = check_bypass(event_path=str(event_file))
         assert bypassed
-        assert "hotfix" in reason
+        assert "incident" in reason
 
     def test_no_bypass_for_unrelated_labels(self, tmp_path: Path) -> None:
         payload = {
