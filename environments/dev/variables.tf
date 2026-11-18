@@ -119,3 +119,66 @@ variable "s3_interface_security_group_id" {
   type        = string
   default     = null
 }
+
+variable "client" {
+  description = "Security naming contract client."
+  type        = string
+  validation {
+    condition     = can(regex("^[a-z0-9-]+$", var.client))
+    error_message = "Use a lowercase client identifier."
+  }
+}
+
+variable "project" {
+  description = "Security naming contract project."
+  type        = string
+  validation {
+    condition     = can(regex("^[a-z0-9-]+$", var.project))
+    error_message = "Use a lowercase project identifier."
+  }
+}
+
+variable "farm_id" {
+  description = "Single pattern farm identifier."
+  type        = string
+  validation {
+    condition     = can(regex("^[A-Z]{3}-F[0-9]{3,6}$", var.farm_id))
+    error_message = "Use a farm ID such as CAU-F001."
+  }
+}
+
+variable "farm_certificate_csr" {
+  description = "Public device-generated CSR supplied externally; never supply its private key."
+  type        = string
+  validation {
+    condition     = can(regex("^-----BEGIN CERTIFICATE REQUEST-----", trimspace(var.farm_certificate_csr)))
+    error_message = "Supply the public CSR in PEM format."
+  }
+}
+
+variable "farm_certificate_active" {
+  description = "Certificate status for the single farm; false performs deactivation."
+  type        = bool
+  default     = false
+  validation {
+    condition     = var.farm_certificate_active != null
+    error_message = "Specify true or false."
+  }
+}
+
+variable "security_network" {
+  description = "Approved security module network inputs; no new firewall rules."
+  type = object({
+    authorized_private_cidrs = list(string)
+    visitor_cidr             = string
+    log_authorized_cidr      = string
+    drone_backup_cidrs       = list(string)
+    admin_cidr               = string
+    dns_cidr                 = string
+    app_cidr                 = string
+  })
+  validation {
+    condition     = length(var.security_network.authorized_private_cidrs) == 1 && alltrue([for c in concat(var.security_network.authorized_private_cidrs, var.security_network.drone_backup_cidrs, [var.security_network.visitor_cidr, var.security_network.log_authorized_cidr, var.security_network.admin_cidr, var.security_network.dns_cidr, var.security_network.app_cidr]) : can(cidrnetmask(c))])
+    error_message = "Supply valid CIDRs and one authorized private range (current security NACL interface)."
+  }
+}

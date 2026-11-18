@@ -63,3 +63,10 @@ This module provisions core security infrastructure for the AromaPacifico platfo
 ## Sample Usage
 
 Refer to the `sample/` directory for consumption patterns complying with PC-IAC-026.
+
+
+## Ingestion integration contract (#24)
+
+`kms_key_data_arn` and `role_ingest_arn` are the actual outputs used by ingest. The optional `ingest_rule_name` restricts the IoT role's trust to the exact rule and account; null uses the conventional underscore form of `${client}-${project}-${environment}-telemetry`. The ingestion role now allows only telemetry PutItem, reception-queue SendMessage and `kms:Decrypt`, `kms:GenerateDataKey`, `kms:DescribeKey` on the data CMK through DynamoDB/SQS in the same account. It cannot write thresholds. Its output waits for the inline policy. Other role/key/firewall contracts are retained.
+
+The data key policy's existing account delegation allows these scoped identity grants. Broader legacy key administration and other platform-role permissions are not represented as a completed security audit by #24. New tests in `tests/ingest.tftest.hcl` verify ingestion trust and resource/action boundaries without AWS access.

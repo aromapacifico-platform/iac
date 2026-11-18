@@ -27,6 +27,7 @@ output "kms_key_logs_arn" {
 output "role_ingest_arn" {
   description = "IAM Role ARN for AWS IoT Core to publish telemetry into DynamoDB and SQS."
   value       = aws_iam_role.ingest.arn
+  depends_on  = [aws_iam_role_policy.ingest]
 }
 
 output "role_focus_function_arn" {

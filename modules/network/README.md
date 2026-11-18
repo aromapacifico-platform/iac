@@ -145,6 +145,12 @@ wildcards in its resource names are rejected. Actual bucket/table
 ARNs and execution role ARNs must come from security/workload contracts. No
 permissive fallback or deployment DenyAll fixture is installed.
 
+The current reusable CI workflow does not supply this map. PR #8 remains open;
+its per-environment `terraform.tfvars` grants and workflow pinning must be
+integrated from main after merge. See [plan prerequisites](../../docs/iac/ci-plan-inputs.md).
+The existing root validations and explicit grants remain unchanged; test fixtures
+are not deployment defaults.
+
 `collection_center_cidrs` and `network_inputs` remain as deprecated compatibility
 metadata from #21. Even the existing production map listing three sites does not
 create a route or VPN. Use the single department input for this implementation.

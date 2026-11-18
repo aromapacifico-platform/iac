@@ -4,9 +4,9 @@ This directory provides a functional execution fixture for `modules/function` co
 
 ## Architecture Flow
 
-`terraform.tfvars` (pure configuration)  
-  --> `variables.tf` (schema and type definition)  
-    --> `locals.tf` (governance transformation and naming construction)  
+`terraform.tfvars` (pure configuration)
+  --> `variables.tf` (schema and type definition)
+    --> `locals.tf` (governance transformation and naming construction)
       --> `main.tf` (module invocation passing `local.*`)
 
 ## Verification Commands
@@ -16,4 +16,3 @@ terraform fmt -check
 terraform init -backend=false
 terraform validate
 ```
-

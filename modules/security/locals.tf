@@ -1,6 +1,8 @@
 locals {
   name_prefix = "${var.client}-${var.project}-${var.environment}"
 
+  ingest_rule_name = var.ingest_rule_name == null ? replace("${local.name_prefix}-telemetry", "-", "_") : var.ingest_rule_name
+
   # Standard tags per PC-IAC-004
   common_tags = merge(
     var.additional_tags,

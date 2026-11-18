@@ -31,4 +31,3 @@ output "sample_inference_model_id" {
   description = "Sample output exposing configured Bedrock inference model ID."
   value       = module.function.inference_model_id
 }
-

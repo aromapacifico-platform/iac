@@ -1,5 +1,34 @@
-mock_provider "aws" {}
+mock_provider "aws" {
+  override_during = plan
+  mock_resource "aws_vpc" {
+    defaults = { id = "vpc-0123456789abcdef0" }
+  }
+  mock_resource "aws_subnet" {
+    defaults = { id = "subnet-0123456789abcdef0" }
+  }
+  mock_resource "aws_iam_role" {
+    defaults = { arn = "arn:aws:iam::111122223333:role/mock-security-role" }
+  }
+  mock_resource "aws_iot_certificate" {
+    defaults = { arn = "arn:aws:iot:us-east-1:111122223333:cert/1111111111111111111111111111111111111111111111111111111111111111" }
+  }
+
+  mock_data "aws_caller_identity" {
+    defaults = { account_id = "111122223333", arn = "arn:aws:iam::111122223333:root", user_id = "mock" }
+  }
+  mock_data "aws_region" {
+    defaults = { name = "us-east-1", region = "us-east-1" }
+  }
+  mock_data "aws_iam_policy_document" {
+    defaults = { json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}" }
+  }
+  mock_resource "aws_kms_key" {
+    defaults = { arn = "arn:aws:kms:us-east-1:111122223333:key/11111111-2222-3333-4444-555555555555" }
+  }
+}
+
 variables {
+  farm_certificate_csr = "-----BEGIN CERTIFICATE REQUEST-----\nQUJD\n-----END CERTIFICATE REQUEST-----"
   endpoint_access = {
     s3 = {
       principal_arns = ["arn:aws:iam::111122223333:role/fixture"]

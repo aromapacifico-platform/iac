@@ -42,8 +42,11 @@ Each environment has the same files:
 
 ## Remote state
 
-Every workload account has its own bucket `aromapacifico-tfstate-<env>` and KMS key
-`alias/aromapacifico-tfstate`, created by `bootstrap/`:
+Every workload root targets its own bucket `aromapacifico-tfstate-<env>` and KMS key
+`alias/aromapacifico-tfstate`, defined by `bootstrap/`. Configuration alone does not
+prove they exist. The CI speculative plan retains its temporary local backend
+fallback for the reported missing S3 bucket; no bootstrap is performed by this fix.
+The configured remote-state controls are:
 
 - The bucket is versioned, blocks public access, enforces TLS and encrypts with SSE-KMS by
   default. Old state versions expire after 90 days.
@@ -74,6 +77,11 @@ terraform plan
 `terraform.tfvars` is loaded automatically. Values that are sensitive or personal go in an
 ignored file (`*.auto.tfvars`, `*.local.tfvars` or `secrets.tfvars`) or come from the
 pipeline as `TF_VAR_*`; they are never committed.
+
+The reusable CI workflow accepts tool versions only. Approved endpoint grants
+and the public device CSR remain prerequisites for the final plan in #27; see
+[plan inputs and pending integration](docs/iac/ci-plan-inputs.md). Mock test
+fixtures are not deployment inputs.
 
 ## Tags
 
@@ -116,3 +124,8 @@ root with an explicit account/role and dedicated backend, never the dev profile
 by assumption. See [the network README](modules/network/README.md) for addressing,
 inputs/outputs, both VPN tunnels, Secrets Manager PSK handling, security/DNS
 contracts, mock tests and deployment prerequisites.
+
+
+## Farm and telemetry infrastructure (#24)
+
+The [dev root](environments/dev/README.md) now wires one [farm](modules/farm/README.md) and [ingest](modules/ingest/README.md) pattern to existing network/security contracts. The device's private key stays outside Terraform, MQTT authorization is farm-specific, and the tables have no TTL pending verified five-year archival. See [validation evidence and remaining limits](docs/iac/hu-24-validation.md).

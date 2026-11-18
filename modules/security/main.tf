@@ -34,6 +34,8 @@ resource "aws_kms_alias" "this" {
 }
 
 data "aws_iam_policy_document" "kms_key_policy" {
+  provider = aws.project
+
   for_each = local.kms_keys
 
   statement {
@@ -95,6 +97,10 @@ resource "aws_iam_role" "ingest" {
         Principal = {
           Service = "iot.amazonaws.com"
         }
+        Condition = {
+          StringEquals = { "aws:SourceAccount" = local.account_id }
+          ArnEquals    = { "aws:SourceArn" = "arn:aws:iot:${local.aws_region}:${local.account_id}:rule/${local.ingest_rule_name}" }
+        }
       }
     ]
   })
@@ -120,8 +126,7 @@ resource "aws_iam_role_policy" "ingest" {
         Sid    = "DynamoDBTelemetryPutItem"
         Effect = "Allow"
         Action = [
-          "dynamodb:PutItem",
-          "dynamodb:UpdateItem"
+          "dynamodb:PutItem"
         ]
         Resource = "arn:aws:dynamodb:${local.aws_region}:${local.account_id}:table/${local.name_prefix}-dynamo-telemetry"
       },
@@ -137,10 +142,17 @@ resource "aws_iam_role_policy" "ingest" {
         Sid    = "KMSDataKeyEncryption"
         Effect = "Allow"
         Action = [
-          "kms:Encrypt",
-          "kms:GenerateDataKey*"
+          "kms:Decrypt",
+          "kms:GenerateDataKey",
+          "kms:DescribeKey"
         ]
         Resource = aws_kms_key.this["data"].arn
+        Condition = {
+          StringEquals = {
+            "kms:CallerAccount" = local.account_id
+            "kms:ViaService"    = ["dynamodb.${local.aws_region}.amazonaws.com", "sqs.${local.aws_region}.amazonaws.com"]
+          }
+        }
       }
     ]
   })

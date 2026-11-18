@@ -26,4 +26,3 @@ module "function" {
   inference_model_id     = var.inference_model_id
   additional_tags        = local.common_tags
 }
-
