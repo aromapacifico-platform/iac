@@ -21,6 +21,11 @@ on:
         required: false
         type: string
         default: ''
+      aws_region:
+        description: 'Target AWS region (strictly restricted to us-east-1 or us-east-2).'
+        required: false
+        type: string
+        default: 'us-east-1'
 
 permissions:
   id-token: write
@@ -39,4 +44,5 @@ jobs:
     with:
       emergency_override: ${{ inputs.emergency_override || false }}
       bypass_reason: ${{ inputs.bypass_reason || '' }}
+      aws_region: ${{ inputs.aws_region || 'us-east-1' }}
       terraform_version: '1.15.8'
